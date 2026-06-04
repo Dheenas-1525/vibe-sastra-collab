@@ -25,5 +25,5 @@ pnpm-lock.yaml
 *.sw?
 *.txt
 
-package.json
+# package.json must NOT be ignored — Docker build requires it
 package-lock.json
