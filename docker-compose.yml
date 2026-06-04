@@ -63,14 +63,14 @@ services:
 
   # ── vibe-ai Server (Python — video/audio pipeline) ──────────────────────────
   # Handles: audio extraction → Whisper transcription → segmentation → question generation
-  # Question generation points to LM Studio via VLLM_BASE_URL in ../vibe-ai/.env
+  # Question generation points to GPU vLLM server via VLLM_BASE_URL in vibe-ai/.env
   vibe-aiserver:
     build:
-      context: ../vibe-ai            # cloned at: vibe-new/vibe-ai/
+      context: ./vibe-ai
       dockerfile: Dockerfile
     container_name: vibe-aiserver
     env_file:
-      - ../vibe-ai/.env
+      - ./vibe-ai/.env
     volumes:
       - ./firebase-service-account.json:/app/firebase-service-account.json:ro
     ports:

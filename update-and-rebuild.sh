@@ -16,7 +16,7 @@ VIBE_AI_URL="https://github.com/vicharanashala/vibe-ai.git"       # standalone v
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 BACKEND_DIR="$SCRIPT_DIR/backend"           # vibe/backend/
-VIBE_AI_DIR="$SCRIPT_DIR/../vibe-ai"        # vibe-ai/
+VIBE_AI_DIR="$SCRIPT_DIR/vibe-ai"          # vibe/vibe-ai/ (inside the repo)
 
 # ── Log file setup ────────────────────────────────────────────────────────────
 LOG_DIR="$SCRIPT_DIR/update-logs"
@@ -52,15 +52,8 @@ if [ "$1" = "--git" ]; then
   rm -rf "$TEMP_MONOREPO"
   echo "  ✓ Backend updated from monorepo"
 
-  # ── vibe-ai: standalone repo ──
-  echo ""
-  echo "  → Updating vibe-ai from $VIBE_AI_URL ..."
-  if [ -d "$VIBE_AI_DIR/.git" ]; then
-    git -C "$VIBE_AI_DIR" pull
-  else
-    git clone "$VIBE_AI_URL" "$VIBE_AI_DIR"
-  fi
-  echo "  ✓ vibe-ai updated"
+  # ── vibe-ai: now lives inside the repo — no separate clone needed ──
+  echo "  ✓ vibe-ai is part of this repo — no separate clone needed"
 
   echo ""
   echo "── Versions after update ──"

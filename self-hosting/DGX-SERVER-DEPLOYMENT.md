@@ -853,11 +853,11 @@ services:
   # ── vibe-ai Server ───────────────────────────────────────────────────
   vibe-aiserver:
     build:
-      context: ../vibe-ai
+      context: ./vibe-ai
       dockerfile: Dockerfile
     container_name: vibe-aiserver
     env_file:
-      - ../vibe-ai/.env
+      - ./vibe-ai/.env
     volumes:
       - ./firebase-service-account.json:/app/firebase-service-account.json:ro
     ports:
@@ -1546,7 +1546,7 @@ cd vibe
 git pull origin main
 
 # Update vibe-ai repo
-cd ../vibe-ai
+cd vibe-ai
 git pull origin main
 
 # Rebuild changed containers

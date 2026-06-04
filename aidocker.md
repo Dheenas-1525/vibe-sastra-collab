@@ -187,11 +187,11 @@ VLLM_BASE_URL=http://host.docker.internal:1234/v1   # LM Studio URL
 ```yaml
 vibe-aiserver:
   build:
-    context: ../vibe-ai
+    context: ./vibe-ai
     dockerfile: Dockerfile
   container_name: vibe-aiserver
   env_file:
-    - ../vibe-ai/.env
+    - ./vibe-ai/.env
   volumes:
     - ./firebase-service-account.json:/app/firebase-service-account.json:ro
   ports:

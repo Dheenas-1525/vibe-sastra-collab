@@ -7,7 +7,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_SRC="$SCRIPT_DIR/backend/src"
-VIBE_AI_SRC="$SCRIPT_DIR/../vibe-ai/src"
+VIBE_AI_SRC="$SCRIPT_DIR/vibe-ai/src"
 PATCHES="$SCRIPT_DIR/patches"
 
 echo "============================================"
@@ -80,7 +80,7 @@ echo "      Fix: Remove broken flatten loop; replace google-cloud-storage with m
 cp "$PATCHES/vibe-ai/ai.py" \
    "$VIBE_AI_SRC/ai.py"
 cp "$PATCHES/vibe-ai/requirements.txt" \
-   "$SCRIPT_DIR/../vibe-ai/requirements.txt"
+   "$SCRIPT_DIR/vibe-ai/requirements.txt"
 echo "      ✓ Applied"
 
 echo ""

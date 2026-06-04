@@ -87,3 +87,4 @@ backend.env
 frontend/.env
 litellm_config.yaml
 update-logs/
+vibe-ai/.env
