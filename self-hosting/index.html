@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ViBe — Self-Hosting Guide</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico"/>
+<link rel="icon" type="image/png" href="logo.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0a0a0b;--surface:#111113;--surface2:#18181b;--surface3:#1c1c1f;
+  --border:#27272a;--border2:#3f3f46;
+  --primary:#ff914d;--primary-light:#ffa263;--primary-dark:#e6732b;--primary-glow:rgba(255,145,77,.22);
+  --cyan:#06b6d4;--green:#10b981;--amber:#f59e0b;--red:#ef4444;
+  --text:#f4f4f5;--text2:#a1a1aa;--text3:#71717a;
+  --code-bg:#0d1117;--code-border:var(--border);
+  --sidebar-w:272px;--radius:12px;--radius-sm:8px;
+  --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+[data-theme='light']{
+  --bg:#ffffff;--surface:#f8f8f9;--surface2:#f1f1f3;--surface3:#e8e8ec;
+  --border:#e4e4e7;--border2:#d4d4d8;
+  --text:#18181b;--text2:#52525b;--text3:#a1a1aa;
+  --code-bg:#f6f8fa;--code-border:#e4e4e7;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.6;overflow-x:hidden;transition:background .25s,color .25s}
+
+/* ── Progress bar ── */
+#progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--primary-dark));z-index:9999;width:0%;transition:width .1s linear;box-shadow:0 0 12px var(--primary)}
+
+/* ── Sidebar ── */
+#sidebar{position:fixed;top:56px;left:0;width:var(--sidebar-w);height:calc(100vh - 56px);background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;z-index:100;display:flex;flex-direction:column;padding-bottom:2rem}
+#sidebar::-webkit-scrollbar{width:4px}
+#sidebar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+.sidebar-logo{padding:1.25rem 1.25rem .9rem;border-bottom:1px solid var(--border);flex-shrink:0}
+.sidebar-logo .vibe-logo{display:flex;align-items:center;gap:.5rem}
+.sidebar-logo .vibe-logo img{height:28px;width:auto;flex-shrink:0}
+.sidebar-logo .vibe-logo span{font-size:1.4rem;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--primary-dark));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.02em}
+.sidebar-logo .vibe-sub{font-size:.7rem;color:var(--text3);margin-top:.3rem;letter-spacing:.08em;text-transform:uppercase}
+.sidebar-search{padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+.sidebar-search input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.45rem .75rem;color:var(--text);font-size:.8rem;font-family:var(--font);outline:none;transition:border-color .2s}
+.sidebar-search input:focus{border-color:var(--primary)}
+.sidebar-search input::placeholder{color:var(--text3)}
+.sidebar-nav{padding:.5rem 0;flex:1}
+.nav-section{padding:.25rem 1rem .1rem;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-top:.5rem}
+.nav-item{display:flex;align-items:center;gap:.6rem;padding:.45rem 1rem;font-size:.82rem;color:var(--text2);cursor:pointer;transition:all .15s;text-decoration:none;border-left:2px solid transparent;margin:1px 0}
+.nav-item:hover{color:var(--text);background:var(--surface2);border-left-color:var(--border2)}
+.nav-item.active{color:var(--primary-light);background:rgba(255,145,77,.08);border-left-color:var(--primary);font-weight:500}
+.nav-item .nav-icon{font-size:.9rem;width:18px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;font-size:.6rem;background:var(--primary);color:#fff;border-radius:999px;padding:.1rem .4rem;font-weight:600}
+
+/* ── Main ── */
+#main{margin-left:var(--sidebar-w);min-height:100vh;padding-top:56px}
+.hero{position:relative;overflow:hidden;padding:4rem 3rem 4rem;background:linear-gradient(160deg,#0a0a0b 0%,#130f09 50%,#0a0a0b 100%)}
+.hero-glow{position:absolute;top:-80px;right:-80px;width:500px;height:500px;background:radial-gradient(circle,rgba(255,145,77,.13) 0%,transparent 70%);pointer-events:none}
+.hero-glow2{position:absolute;bottom:-100px;left:200px;width:400px;height:400px;background:radial-gradient(circle,rgba(6,182,212,.08) 0%,transparent 70%);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:.4rem;background:rgba(255,145,77,.1);border:1px solid rgba(255,145,77,.28);border-radius:999px;padding:.3rem .8rem;font-size:.75rem;color:var(--primary-light);margin-bottom:1.5rem;animation:fadeDown .6s ease}
+.hero h1{font-size:3rem;font-weight:800;line-height:1.15;letter-spacing:-.03em;max-width:680px;animation:fadeUp .6s ease .1s both}
+.hero h1 span{background:linear-gradient(135deg,#ff914d,#e6732b);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero-desc{font-size:1.05rem;color:var(--text2);max-width:580px;margin-top:1rem;line-height:1.7;animation:fadeUp .6s ease .2s both}
+.hero-ctas{display:flex;gap:.75rem;margin-top:2rem;flex-wrap:wrap;animation:fadeUp .6s ease .3s both}
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.65rem 1.4rem;border-radius:var(--radius-sm);font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;border:none}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 0 20px rgba(255,145,77,.3)}
+.btn-primary:hover{background:var(--primary-light);transform:translateY(-1px);box-shadow:0 0 30px rgba(255,145,77,.4)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{color:var(--text);border-color:var(--primary);background:rgba(255,145,77,.06)}
+.hero-stats{display:flex;gap:2.5rem;margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border);animation:fadeUp .6s ease .4s both}
+.hero-stat .num{font-size:1.8rem;font-weight:800;color:var(--text)}
+.hero-stat .label{font-size:.75rem;color:var(--text3);margin-top:.1rem}
+
+/* ── Section wrapper ── */
+.section{padding:2.5rem 3rem;border-bottom:1px solid var(--border)}
+.section-header{margin-bottom:2rem}
+.phase-pill{display:inline-flex;align-items:center;gap:.4rem;background:rgba(255,145,77,.1);border:1px solid rgba(255,145,77,.25);border-radius:999px;padding:.25rem .75rem;font-size:.72rem;font-weight:700;color:var(--primary-light);margin-bottom:.75rem;letter-spacing:.04em;text-transform:uppercase}
+.section h2{font-size:1.65rem;font-weight:700;letter-spacing:-.02em;color:var(--text)}
+.section-desc{font-size:.95rem;color:var(--text2);margin-top:.4rem;max-width:680px}
+
+/* ── Architecture diagram ── */
+.arch-diagram{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;margin:1.5rem 0;position:relative;overflow:hidden}
+.arch-diagram::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,145,77,.03) 0%,transparent 60%);pointer-events:none}
+.arch-row{display:flex;align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap;margin:.75rem 0}
+.arch-box{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:.65rem 1.1rem;font-size:.8rem;font-weight:500;color:var(--text);text-align:center;min-width:130px;position:relative;transition:all .2s}
+.arch-box:hover{border-color:var(--primary);background:rgba(255,145,77,.06);transform:translateY(-2px)}
+.arch-box.highlight{border-color:var(--primary);background:rgba(255,145,77,.1);color:var(--primary-light)}
+.arch-box.green{border-color:var(--green);background:rgba(16,185,129,.08);color:#34d399}
+.arch-box.cyan{border-color:var(--cyan);background:rgba(6,182,212,.08);color:#22d3ee}
+.arch-box.amber{border-color:var(--amber);background:rgba(245,158,11,.08);color:#fbbf24}
+.arch-box .arch-label{font-size:.65rem;color:var(--text3);margin-top:.2rem}
+.arch-arrow{color:var(--text3);font-size:1.1rem;flex-shrink:0}
+.arch-section-label{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);text-align:center;margin:.25rem 0}
+
+/* ── Cards grid ── */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin:1.5rem 0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;transition:all .2s;position:relative;overflow:hidden;cursor:default}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--primary),var(--primary-dark));opacity:0;transition:opacity .2s}
+.card:hover{border-color:var(--border2);transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.card:hover::before{opacity:1}
+.card-icon{font-size:2rem;margin-bottom:.75rem}
+.card h3{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:.35rem}
+.card p{font-size:.82rem;color:var(--text2);line-height:1.5}
+.card-badge{display:inline-block;font-size:.65rem;font-weight:700;padding:.15rem .5rem;border-radius:999px;margin-top:.75rem}
+.card-badge.free{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.3)}
+.card-badge.req{background:rgba(255,145,77,.15);color:var(--primary-light);border:1px solid rgba(255,145,77,.3)}
+.card-badge.opt{background:rgba(100,116,139,.15);color:var(--text3);border:1px solid var(--border)}
+
+/* ── Steps ── */
+.steps{margin:1.5rem 0}
+.step{display:flex;gap:1rem;margin:.85rem 0;opacity:0;transform:translateX(-12px);transition:all .4s ease}
+.step.visible{opacity:1;transform:none}
+.step-num{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;font-size:.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.1rem;box-shadow:0 0 12px var(--primary-glow)}
+.step-body h4{font-size:.9rem;font-weight:600;color:var(--text);margin-bottom:.25rem}
+.step-body p{font-size:.85rem;color:var(--text2);line-height:1.55}
+.step-body p+p{margin-top:.35rem}
+
+/* ── Code blocks ── */
+.code-wrap{margin:1rem 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.code-header{display:flex;align-items:center;justify-content:space-between;background:var(--code-bg);padding:.55rem 1rem;border-bottom:1px solid var(--code-border)}
+.code-lang{font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)}
+.code-dots{display:flex;gap:.35rem}
+.code-dot{width:10px;height:10px;border-radius:50%}
+.copy-btn{background:none;border:1px solid var(--border);border-radius:5px;color:var(--text3);font-size:.72rem;padding:.2rem .6rem;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.copy-btn:hover{color:var(--text);border-color:var(--text3)}
+.copy-btn.copied{color:var(--green);border-color:var(--green)}
+pre{background:var(--code-bg);padding:1.1rem 1.25rem;overflow-x:auto;margin:0;font-size:.82rem;line-height:1.65}
+pre::-webkit-scrollbar{height:4px}
+pre::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+code{font-family:var(--mono);color:var(--text)}
+.token-comment{color:#6b7280}
+.token-key{color:#e6732b}
+.token-value{color:#c77c0e}
+.token-bash{color:#15803d}
+.token-flag{color:#9333ea}
+.token-string{color:#c77c0e}
+.token-cmd{color:#7c3aed}
+.token-comment2{color:#6b7280;font-style:italic}
+.inline-code{font-family:var(--mono);font-size:.82em;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:.1em .35em;color:var(--primary-dark)}
+
+[data-theme='dark'] code{color:#f4f4f5}
+[data-theme='dark'] .token-key{color:#ffa263}
+[data-theme='dark'] .token-value{color:#fcd34d}
+[data-theme='dark'] .token-bash{color:#86efac}
+[data-theme='dark'] .token-flag{color:#f9a8d4}
+[data-theme='dark'] .token-string{color:#fcd34d}
+[data-theme='dark'] .token-cmd{color:#d8b4fe}
+[data-theme='dark'] .token-comment{color:#6b7280}
+[data-theme='dark'] .token-comment2{color:#6b7280}
+
+/* ── Alerts ── */
+.alert{border-radius:var(--radius-sm);padding:1rem 1.1rem;margin:1rem 0;display:flex;gap:.75rem;font-size:.85rem;line-height:1.55}
+.alert-icon{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+.alert-body strong{display:block;font-size:.8rem;font-weight:700;margin-bottom:.2rem;letter-spacing:.03em;text-transform:uppercase}
+.alert.info{background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.25);color:#93c5fd}
+.alert.info .alert-icon{color:var(--cyan)}
+.alert.info strong{color:var(--cyan)}
+.alert.warn{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);color:#fcd34d}
+.alert.warn .alert-icon{color:var(--amber)}
+.alert.warn strong{color:var(--amber)}
+.alert.success{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.25);color:#6ee7b7}
+.alert.success .alert-icon{color:var(--green)}
+.alert.success strong{color:var(--green)}
+.alert.danger{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.25);color:#fca5a5}
+.alert.danger .alert-icon{color:var(--red)}
+.alert.danger strong{color:var(--red)}
+
+/* ── Table ── */
+.table-wrap{overflow-x:auto;margin:1rem 0;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+thead{background:var(--surface)}
+th{padding:.7rem 1rem;text-align:left;font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)}
+td{padding:.7rem 1rem;color:var(--text2);border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--surface2)}
+td .tag{display:inline-block;font-size:.68rem;font-weight:700;padding:.12rem .45rem;border-radius:4px}
+td .tag.req{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.25)}
+td .tag.opt{background:rgba(100,116,139,.12);color:var(--text3);border:1px solid var(--border)}
+td .tag.cond{background:rgba(245,158,11,.12);color:#fcd34d;border:1px solid rgba(245,158,11,.25)}
+
+/* ── Pipeline ── */
+.pipeline{display:flex;align-items:center;gap:0;margin:1.5rem 0;flex-wrap:wrap}
+.pipe-step{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.75rem 1.1rem;font-size:.8rem;text-align:center;flex:1;min-width:120px;position:relative;transition:all .2s}
+.pipe-step:hover{border-color:var(--primary);background:rgba(255,145,77,.06)}
+.pipe-step .pipe-num{font-size:.65rem;font-weight:700;color:var(--primary-light);margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.05em}
+.pipe-step .pipe-name{font-weight:600;color:var(--text)}
+.pipe-step .pipe-tool{font-size:.7rem;color:var(--text3);margin-top:.2rem}
+.pipe-arrow{color:var(--text3);font-size:.9rem;padding:0 .25rem;flex-shrink:0}
+
+/* ── Tabs ── */
+.tabs{margin:1rem 0}
+.tab-bar{display:flex;gap:.25rem;border-bottom:1px solid var(--border);margin-bottom:0}
+.tab-btn{padding:.5rem 1.1rem;font-size:.82rem;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;font-family:var(--font)}
+.tab-btn.active{color:var(--primary-light);border-bottom-color:var(--primary)}
+.tab-btn:hover:not(.active){color:var(--text2)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* ── Choice cards ── */
+.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0}
+.choice-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;transition:all .2s;cursor:default}
+.choice-card:hover{border-color:var(--primary);transform:translateY(-2px)}
+.choice-card .choice-label{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:.5rem}
+.choice-card h4{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:.5rem}
+.choice-card .choice-desc{font-size:.83rem;color:var(--text2);line-height:1.5}
+.choice-card .choice-list{margin-top:.75rem;display:flex;flex-direction:column;gap:.25rem}
+.choice-card .choice-item{display:flex;align-items:flex-start;gap:.4rem;font-size:.8rem;color:var(--text2)}
+.choice-item .ci-icon{color:var(--green);flex-shrink:0;margin-top:.1rem}
+.choice-item .ci-icon.amber{color:var(--amber)}
+
+/* ── Quick ref ── */
+.qref-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:.75rem;margin:1rem 0}
+.qref-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.9rem 1.1rem;display:flex;gap:.75rem;align-items:flex-start}
+.qref-item .qref-label{font-size:.78rem;color:var(--text2);margin-bottom:.35rem}
+.qref-item code{display:block;font-family:var(--mono);font-size:.75rem;color:var(--green)}
+
+/* ── Animations ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fade-in{opacity:0;transform:translateY(16px);transition:all .5s ease}
+.fade-in.visible{opacity:1;transform:none}
+
+/* ── Top Navbar ── */
+#topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(7,9,15,.97);border-bottom:1px solid var(--border);z-index:200;display:flex;align-items:center;padding:0 1.25rem;gap:.75rem;backdrop-filter:blur(12px)}
+.topbar-logo{display:flex;align-items:center;gap:.55rem;text-decoration:none;flex-shrink:0}
+.topbar-logo img{height:26px;width:auto}
+.topbar-logo .tl-name{font-size:1.05rem;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--primary-dark));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.02em}
+.topbar-divider{width:1px;height:18px;background:var(--border2);flex-shrink:0;margin:0 .25rem}
+.topbar-tag{font-size:.68rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);white-space:nowrap}
+.topbar-nav{display:flex;gap:.1rem;margin-left:auto;align-items:center}
+.topbar-link{display:flex;align-items:center;gap:.35rem;padding:.38rem .8rem;font-size:.82rem;font-weight:500;color:var(--text2);text-decoration:none;border-radius:6px;transition:all .15s;white-space:nowrap}
+.topbar-link:hover{color:var(--text);background:var(--surface2)}
+.topbar-link.current{color:var(--primary-light);background:rgba(255,145,77,.08)}
+.topbar-gh{display:flex;align-items:center;gap:.4rem;padding:.38rem .9rem;font-size:.82rem;font-weight:500;color:var(--text2);text-decoration:none;border:1px solid var(--border2);border-radius:6px;transition:all .15s;margin-left:.4rem}
+.topbar-gh:hover{color:var(--text);border-color:var(--primary);background:rgba(255,145,77,.06)}
+
+/* ── Footer ── */
+#footer{background:var(--surface);border-top:1px solid var(--border);padding:2.5rem 3rem 2rem;margin-left:var(--sidebar-w)}
+.footer-inner{display:flex;gap:3.5rem;flex-wrap:wrap;max-width:960px}
+.footer-brand{flex:1;min-width:220px}
+.footer-brand .fb-logo{display:flex;align-items:center;gap:.5rem;text-decoration:none}
+.footer-brand .fb-logo img{height:22px}
+.footer-brand .fb-logo span{font-size:1.1rem;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--primary-dark));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.footer-brand .fb-desc{font-size:.82rem;color:var(--text3);margin-top:.6rem;max-width:260px;line-height:1.6}
+.footer-col{display:flex;flex-direction:column;min-width:130px}
+.footer-col h5{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:.6rem}
+.footer-col a{font-size:.83rem;color:var(--text2);text-decoration:none;transition:color .15s;padding:.18rem 0}
+.footer-col a:hover{color:var(--primary-light)}
+.footer-bottom{margin-top:2rem;padding-top:1.25rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:.76rem;color:var(--text3);flex-wrap:wrap;gap:.5rem}
+.footer-bottom a{color:var(--text3);text-decoration:none;transition:color .15s}
+.footer-bottom a:hover{color:var(--primary-light)}
+
+/* ── Back to top ── */
+#btt{position:fixed;bottom:1.5rem;right:1.5rem;width:40px;height:40px;border-radius:50%;background:var(--primary);color:#fff;border:none;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;opacity:0;transition:all .3s;box-shadow:0 4px 15px rgba(255,145,77,.4);z-index:201}
+#btt.show{opacity:1}
+#btt:hover{transform:translateY(-2px);background:var(--primary-light)}
+
+/* ── Hamburger (mobile) ── */
+#ham{display:none;position:fixed;top:64px;left:1rem;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);width:40px;height:40px;cursor:pointer;align-items:center;justify-content:center;font-size:1.1rem}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99;backdrop-filter:blur(2px)}
+
+/* ── Status bar ── */
+.status-bar{display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:var(--radius-sm);margin:1rem 0;font-size:.82rem;color:#6ee7b7}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+
+/* ── Divider ── */
+.divider{border:none;border-top:1px solid var(--border);margin:2.5rem 0}
+hr.soft{border:none;border-top:1px solid var(--border);margin:1.5rem 0}
+
+/* ── Theme toggle ── */
+#theme-toggle{display:flex;align-items:center;gap:0;background:var(--surface2);border:1px solid var(--border2);border-radius:999px;padding:.2rem;margin-left:.5rem;flex-shrink:0}
+.theme-btn{display:flex;align-items:center;justify-content:center;gap:.3rem;width:32px;height:26px;border-radius:999px;border:none;cursor:pointer;font-size:.8rem;background:transparent;color:var(--text3);transition:all .2s;padding:0}
+.theme-btn.active{background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(255,145,77,.35)}
+.theme-btn svg{width:13px;height:13px;flex-shrink:0}
+
+/* ── Light theme overrides ── */
+[data-theme='light'] #topbar{background:rgba(255,255,255,.97)}
+[data-theme='light'] #sidebar{background:var(--surface)}
+[data-theme='light'] .hero{background:linear-gradient(160deg,#fff8f4 0%,#fff1ea 50%,#ffffff 100%)}
+[data-theme='light'] .hero-glow{background:radial-gradient(circle,rgba(255,145,77,.1) 0%,transparent 70%)}
+[data-theme='light'] .hero-glow2{background:radial-gradient(circle,rgba(230,115,43,.07) 0%,transparent 70%)}
+[data-theme='light'] .arch-diagram{background:var(--surface);border-color:var(--border)}
+[data-theme='light'] .card{background:var(--surface)}
+[data-theme='light'] .code-wrap{border-color:var(--code-border)}
+[data-theme='light'] .qref-item{background:var(--surface)}
+[data-theme='light'] .choice-card{background:var(--surface)}
+[data-theme='light'] .status-bar{background:rgba(16,185,129,.05);border-color:rgba(16,185,129,.2);color:#16a34a}
+[data-theme='light'] .status-dot{background:#16a34a}
+[data-theme='light'] .alert.success{color:#15803d}
+[data-theme='light'] .alert.warn{color:#92400e}
+[data-theme='light'] .alert.danger{color:#991b1b}
+[data-theme='light'] .alert.info{color:#1e40af}
+[data-theme='light'] #footer{background:var(--surface)}
+[data-theme='light'] .overlay{background:rgba(0,0,0,.35)}
+
+/* ── Responsive ── */
+@media(max-width:900px){
+  #sidebar{transform:translateX(-100%);transition:transform .25s ease}
+  #sidebar.open{transform:none}
+  #main{margin-left:0}
+  .hero{padding:4rem 1.5rem 3rem}
+  .hero h1{font-size:2rem}
+  .section{padding:2rem 1.5rem}
+  .choice-grid{grid-template-columns:1fr}
+  #ham{display:flex}
+  .overlay.show{display:block}
+  .hero-stats{gap:1.5rem}
+  .topbar-link{display:none}
+  .topbar-tag{display:none}
+  .topbar-divider{display:none}
+  #footer{margin-left:0;padding:2rem 1.5rem}
+  .footer-inner{gap:2rem}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<!-- ══ TOP NAVBAR ══ -->
+<header id="topbar">
+  <a class="topbar-logo" href="https://vicharanashala.github.io/vibe/">
+    <img src="logo.png" alt="ViBe" onerror="this.style.display='none'"/>
+    <span class="tl-name">ViBe</span>
+  </a>
+  <div class="topbar-divider"></div>
+  <span class="topbar-tag">Self-Hosting Guide</span>
+  <nav class="topbar-nav">
+    <a class="topbar-link" href="https://vicharanashala.github.io/vibe/docs/getting-started/intro">📚 Documentation</a>
+    <a class="topbar-link" href="https://vicharanashala.github.io/vibe/api">🔌 API Docs</a>
+    <a class="topbar-link current" href="#">🖥️ Self-Hosting</a>
+    <a class="topbar-gh" href="https://github.com/continuousactivelearning/vibe" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub
+    </a>
+    <!-- Theme toggle -->
+    <div id="theme-toggle" role="group" aria-label="Color theme">
+      <button class="theme-btn active" id="btn-dark" onclick="setTheme('dark')" title="Dark theme" aria-pressed="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <button class="theme-btn" id="btn-light" onclick="setTheme('light')" title="Light theme" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+    </div>
+  </nav>
+</header>
+
+<button id="ham" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<!-- ══ SIDEBAR ══ -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <div class="vibe-logo">
+      <img src="logo.png" alt="ViBe" onerror="this.style.display='none'"/>
+      <span>ViBe</span>
+    </div>
+    <div class="vibe-sub">Self-Hosting Manual</div>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="search" placeholder="Search sections…" oninput="searchSections(this.value)"/>
+  </div>
+  <nav class="sidebar-nav" id="sidebar-nav">
+    <div class="nav-section">Overview</div>
+    <a class="nav-item" href="#hero"><span class="nav-icon">🏠</span>Introduction</a>
+    <a class="nav-item" href="#architecture"><span class="nav-icon">🗺️</span>Architecture</a>
+    <a class="nav-item" href="#checklist"><span class="nav-icon">✅</span>What You Need</a>
+
+    <div class="nav-section">Phase 1 — Services</div>
+    <a class="nav-item" href="#mongodb"><span class="nav-icon">🍃</span>MongoDB Atlas</a>
+    <a class="nav-item" href="#firebase"><span class="nav-icon">🔥</span>Firebase Auth</a>
+    <a class="nav-item" href="#anthropic"><span class="nav-icon">🤖</span>Anthropic API</a>
+    <a class="nav-item" href="#recaptcha"><span class="nav-icon">🛡️</span>reCAPTCHA</a>
+    <a class="nav-item" href="#sentry"><span class="nav-icon">👁️</span>Sentry <span class="nav-badge">Optional</span></a>
+
+    <div class="nav-section">Phase 2 — Server</div>
+    <a class="nav-item" href="#requirements"><span class="nav-icon">💻</span>Requirements</a>
+    <a class="nav-item" href="#install-docker"><span class="nav-icon">🐳</span>Install Docker</a>
+    <a class="nav-item" href="#clone"><span class="nav-icon">📦</span>Clone Repository</a>
+
+    <div class="nav-section">Phase 3 — Configure</div>
+    <a class="nav-item" href="#backend-config"><span class="nav-icon">⚙️</span>Backend Config</a>
+    <a class="nav-item" href="#frontend-config"><span class="nav-icon">🎨</span>Frontend Config</a>
+
+    <div class="nav-section">Phase 4 — Deploy</div>
+    <a class="nav-item" href="#deploy"><span class="nav-icon">🚀</span>Launch with Docker</a>
+    <a class="nav-item" href="#verify"><span class="nav-icon">🔍</span>Verify & Test</a>
+    <a class="nav-item" href="#https"><span class="nav-icon">🔒</span>HTTPS Setup</a>
+
+    <div class="nav-section">Phase 5 — AI Server</div>
+    <a class="nav-item" href="#ai-overview"><span class="nav-icon">🧠</span>AI Overview</a>
+    <a class="nav-item" href="#system1"><span class="nav-icon">🎬</span>System 1: Video AI</a>
+    <a class="nav-item" href="#system2"><span class="nav-icon">📝</span>System 2: Text AI</a>
+
+    <div class="nav-section">Operations</div>
+    <a class="nav-item" href="#updating"><span class="nav-icon">🔄</span>Updating</a>
+    <a class="nav-item" href="#database"><span class="nav-icon">🗄️</span>Database Reference</a>
+    <a class="nav-item" href="#troubleshooting"><span class="nav-icon">🔧</span>Troubleshooting</a>
+    <a class="nav-item" href="#quickref"><span class="nav-icon">⚡</span>Quick Reference</a>
+  </nav>
+</nav>
+
+<!-- ══ MAIN CONTENT ══ -->
+<main id="main">
+
+<!-- ── HERO ── -->
+<section class="hero" id="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="hero-badge">📖 Complete Deployment Manual · v1.0</div>
+  <h1>Deploy <span>ViBe</span> on Your<br/>Own Server</h1>
+  <p class="hero-desc">A step-by-step guide from zero to production — even if you have never deployed software before. Every concept is explained, every command is given.</p>
+  <div class="hero-ctas">
+    <a class="btn btn-primary" href="#checklist">▶ Start Here</a>
+    <a class="btn btn-ghost" href="#quickref">⚡ Quick Reference</a>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="num">5</div><div class="label">Phases</div></div>
+    <div class="hero-stat"><div class="num">~60</div><div class="label">Minutes to Deploy</div></div>
+    <div class="hero-stat"><div class="num">2</div><div class="label">Docker Containers</div></div>
+    <div class="hero-stat"><div class="num">0</div><div class="label">Prior Experience Needed</div></div>
+  </div>
+</section>
+
+<!-- ── ARCHITECTURE ── -->
+<section class="section" id="architecture">
+  <div class="section-header fade-in">
+    <div class="phase-pill">🗺️ Overview</div>
+    <h2>How ViBe Works</h2>
+    <p class="section-desc">ViBe runs as two Docker containers on your server that talk to three cloud services you set up for free.</p>
+  </div>
+
+  <div class="arch-diagram fade-in">
+    <div class="arch-section-label">Your Server (Docker)</div>
+    <div class="arch-row">
+      <div class="arch-box highlight">🎨 Frontend<div class="arch-label">React · Port 3000</div></div>
+      <div class="arch-arrow">⟷</div>
+      <div class="arch-box highlight">⚙️ Backend API<div class="arch-label">Node.js · Port 8080</div></div>
+    </div>
+    <div class="arch-row"><div class="arch-arrow" style="transform:rotate(90deg)">⟷</div></div>
+    <div class="arch-section-label">External Cloud Services (Free Accounts)</div>
+    <div class="arch-row">
+      <div class="arch-box green">🍃 MongoDB Atlas<div class="arch-label">Database</div></div>
+      <div class="arch-arrow">·</div>
+      <div class="arch-box cyan">🔥 Firebase<div class="arch-label">Authentication</div></div>
+      <div class="arch-arrow">·</div>
+      <div class="arch-box amber">🤖 Anthropic<div class="arch-label">AI / Claude</div></div>
+    </div>
+  </div>
+
+  <div class="alert info fade-in">
+    <div class="alert-icon">💡</div>
+    <div class="alert-body"><strong>How it flows</strong>Users open the frontend in their browser → frontend calls the backend API → backend reads/writes to MongoDB → AI calls go to Anthropic Claude. Firebase handles login/sign-up silently in the background.</div>
+  </div>
+</section>
+
+<!-- ── CHECKLIST ── -->
+<section class="section" id="checklist">
+  <div class="section-header fade-in">
+    <div class="phase-pill">✅ Before You Begin</div>
+    <h2>What You Will Need</h2>
+    <p class="section-desc">Keep a notepad open. You will collect these values as you go through Phase 1.</p>
+  </div>
+  <div class="cards fade-in">
+    <div class="card"><div class="card-icon">🍃</div><h3>MongoDB Atlas</h3><p>Free cloud database. Stores all users, courses, quizzes, and enrollments.</p><span class="card-badge free">Free · 512 MB</span></div>
+    <div class="card"><div class="card-icon">🔥</div><h3>Firebase</h3><p>Handles user login and sign-up. You only use the Authentication feature.</p><span class="card-badge free">Free forever</span></div>
+    <div class="card"><div class="card-icon">🤖</div><h3>Anthropic</h3><p>Claude AI generates quiz questions from course content. Pay only per use.</p><span class="card-badge req">~$0.01/quiz</span></div>
+    <div class="card"><div class="card-icon">🛡️</div><h3>reCAPTCHA</h3><p>Google's spam protection for the sign-up form.</p><span class="card-badge free">Free</span></div>
+    <div class="card"><div class="card-icon">🐳</div><h3>Docker</h3><p>Installed on your server. Runs both ViBe containers.</p><span class="card-badge free">Free · Open Source</span></div>
+    <div class="card"><div class="card-icon">👁️</div><h3>Sentry</h3><p>Error monitoring. Alerts you when something breaks in production.</p><span class="card-badge opt">Optional</span></div>
+  </div>
+</section>
+
+<!-- ── MONGODB ── -->
+<section class="section" id="mongodb">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Phase 1.1 · Database</div>
+    <h2>🍃 MongoDB Atlas</h2>
+    <p class="section-desc">MongoDB Atlas is a free cloud database. ViBe stores everything here — users, courses, quizzes, progress. Setup takes 5 minutes.</p>
+  </div>
+  <div class="alert info fade-in"><div class="alert-icon">💡</div><div class="alert-body"><strong>What is a database?</strong>Think of it as a filing cabinet in the cloud. Every time a teacher creates a course or a student takes a quiz, that data gets saved here automatically.</div></div>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><h4>Create a MongoDB Atlas account</h4><p>Go to <strong>mongodb.com/atlas</strong> → click <strong>Try Free</strong> → sign up with your email → verify your email.</p></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><h4>Create a free cluster</h4><p>Click <strong>Build a Database</strong> → choose <strong>M0 Free</strong> → pick any cloud provider and the region closest to your server → name it <span class="inline-code">vibe-cluster</span> → click <strong>Create Deployment</strong>.</p></div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><h4>Create a database user</h4><p>A popup appears. Enter a username (e.g. <span class="inline-code">vibe_user</span>) and click <strong>Autogenerate Secure Password</strong>. Copy the password — you need it in the next step. Click <strong>Create Database User</strong>.</p></div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-body"><h4>Allow network access</h4><p>Click <strong>Allow Access from Anywhere</strong> and enter <span class="inline-code">0.0.0.0/0</span>. This lets your server connect to the database. Click <strong>Finish and Close</strong>.</p></div></div>
+    <div class="step"><div class="step-num">5</div><div class="step-body"><h4>Get your connection string (DB_URL)</h4><p>Click <strong>Connect</strong> on your cluster → choose <strong>Drivers</strong> → select <strong>Node.js</strong>. Copy the connection string. Replace <span class="inline-code">&lt;password&gt;</span> with your actual password. This is your <span class="inline-code">DB_URL</span>.</p></div></div>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">Your DB_URL looks like this</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-value">mongodb+srv://vibe_user:YOUR_PASSWORD@vibe-cluster.abc123.mongodb.net/?retryWrites=true&w=majority&appName=vibe-cluster</span></code></pre>
+  </div>
+  <div class="alert success fade-in"><div class="alert-icon">✅</div><div class="alert-body"><strong>No tables to create</strong>ViBe automatically creates all database collections when it first starts up. You do not need to set up any tables or schemas manually.</div></div>
+</section>
+
+<!-- ── FIREBASE ── -->
+<section class="section" id="firebase">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Phase 1.2 · Authentication</div>
+    <h2>🔥 Firebase</h2>
+    <p class="section-desc">Firebase handles user login and sign-up. You will get 7 configuration values from the Firebase Console.</p>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><h4>Create a Firebase project</h4><p>Go to <strong>console.firebase.google.com</strong> → click <strong>Add Project</strong> → name it (e.g. <span class="inline-code">vibe-myschool</span>) → skip Analytics → click <strong>Create Project</strong>.</p></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><h4>Enable Email/Password sign-in</h4><p>Left sidebar → <strong>Authentication</strong> → <strong>Get Started</strong> → <strong>Email/Password</strong> → toggle <strong>Enable</strong> → <strong>Save</strong>.</p></div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><h4>Register a Web App and copy config</h4><p>Project home → click <strong>&lt;/&gt;</strong> icon → nickname it <span class="inline-code">vibe-web</span> → click <strong>Register App</strong>. You will see a config block with 7 values. Copy all of them.</p></div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-body"><h4>Add your domain to authorized domains</h4><p><strong>Authentication</strong> → <strong>Settings</strong> → <strong>Authorized Domains</strong> → <strong>Add Domain</strong> → enter your server's IP or domain name.</p></div></div>
+    <div class="step"><div class="step-num">5</div><div class="step-body"><h4>Generate a Service Account Key</h4><p>Click the gear icon → <strong>Project Settings</strong> → <strong>Service accounts</strong> tab → <strong>Generate new private key</strong> → confirm → a JSON file downloads. Save it as <span class="inline-code">firebase-service-account.json</span> in the <span class="inline-code">vibe/</span> project root. This is required for the backend to verify user tokens.</p></div></div>
+  </div>
+  <div class="table-wrap fade-in">
+    <table><thead><tr><th>Firebase Config Key</th><th>Your .env Variable</th><th>Example Value</th></tr></thead>
+    <tbody>
+      <tr><td><span class="inline-code">apiKey</span></td><td><span class="inline-code">VITE_FIREBASE_API_KEY</span></td><td>AIzaSyABCDEF…</td></tr>
+      <tr><td><span class="inline-code">authDomain</span></td><td><span class="inline-code">VITE_FIREBASE_AUTH_DOMAIN</span></td><td>vibe-myschool.firebaseapp.com</td></tr>
+      <tr><td><span class="inline-code">projectId</span></td><td><span class="inline-code">VITE_FIREBASE_PROJECT_ID</span></td><td>vibe-myschool</td></tr>
+      <tr><td><span class="inline-code">storageBucket</span></td><td><span class="inline-code">VITE_FIREBASE_STORAGE_BUCKET</span></td><td>vibe-myschool.appspot.com</td></tr>
+      <tr><td><span class="inline-code">messagingSenderId</span></td><td><span class="inline-code">VITE_FIREBASE_MESSAGING_SENDER_ID</span></td><td>123456789012</td></tr>
+      <tr><td><span class="inline-code">appId</span></td><td><span class="inline-code">VITE_FIREBASE_APP_ID</span></td><td>1:123456789012:web:abc…</td></tr>
+      <tr><td><span class="inline-code">measurementId</span></td><td><span class="inline-code">VITE_FIREBASE_MEASUREMENT_ID</span></td><td>G-XXXXXXXXXX</td></tr>
+    </tbody></table>
+  </div>
+  <div class="alert warn fade-in"><div class="alert-icon">⚠️</div><div class="alert-body"><strong>Service account key required</strong>Without the service account key, all users will get "Authorization is required" errors after login. The key file must be placed in the project root before running <span class="inline-code">docker compose up</span>.</div></div>
+</section>
+
+<!-- ── ANTHROPIC ── -->
+<section class="section" id="anthropic">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Phase 1.3 · AI</div>
+    <h2>🤖 Anthropic (Claude AI)</h2>
+    <p class="section-desc">Anthropic's Claude generates quiz questions from course content. You pay only for what you use — typically fractions of a cent per quiz generated.</p>
+  </div>
+  <div class="choice-grid fade-in">
+    <div class="choice-card">
+      <div class="choice-label">Option A — Cloud</div>
+      <h4>🤖 Anthropic API</h4>
+      <p class="choice-desc">Use Anthropic's hosted Claude. Easiest setup, best quality.</p>
+      <div class="choice-list">
+        <div class="choice-item"><span class="ci-icon">✓</span>5-minute setup</div>
+        <div class="choice-item"><span class="ci-icon">✓</span>Best AI quality (Claude)</div>
+        <div class="choice-item"><span class="ci-icon amber">~</span>~$0.01 per quiz generated</div>
+        <div class="choice-item"><span class="ci-icon amber">~</span>Requires internet</div>
+      </div>
+    </div>
+    <div class="choice-card">
+      <div class="choice-label">Option B — Local</div>
+      <h4>🖥️ LM Studio (Free)</h4>
+      <p class="choice-desc">Run a local LLM on your server. Free, private, no internet needed.</p>
+      <div class="choice-list">
+        <div class="choice-item"><span class="ci-icon">✓</span>Completely free</div>
+        <div class="choice-item"><span class="ci-icon">✓</span>Data stays on your server</div>
+        <div class="choice-item"><span class="ci-icon amber">~</span>Needs 8+ GB RAM / GPU</div>
+        <div class="choice-item"><span class="ci-icon amber">~</span>Slower than cloud (CPU)</div>
+      </div>
+    </div>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><h4>Create Anthropic account</h4><p>Go to <strong>console.anthropic.com</strong> → sign up → verify email → add payment method (no charge until you use it).</p></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><h4>Create an API key</h4><p>Click your name (top right) → <strong>API Keys</strong> → <strong>Create Key</strong> → name it <span class="inline-code">vibe-production</span>. Copy the key immediately — it starts with <span class="inline-code">sk-ant-api03-…</span> and is shown only once.</p></div></div>
+  </div>
+  <div class="alert warn fade-in"><div class="alert-icon">⚠️</div><div class="alert-body"><strong>Copy it now</strong>The API key is shown only once when created. If you close the page without copying it, you must create a new key.</div></div>
+</section>
+
+<!-- ── RECAPTCHA ── -->
+<section class="section" id="recaptcha">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Phase 1.4 · Security</div>
+    <h2>🛡️ Google reCAPTCHA</h2>
+    <p class="section-desc">Prevents bots from creating fake accounts. You get two keys — one for the frontend, one for the backend.</p>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><h4>Go to the reCAPTCHA admin console</h4><p>Visit <strong>google.com/recaptcha/admin/create</strong> and sign in with a Google account.</p></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><h4>Register your site</h4><p>Label: any name. Type: <strong>reCAPTCHA v2 → "I'm not a robot" Checkbox</strong>. Domains: add your server IP or domain (also add <span class="inline-code">localhost</span> for testing). Accept terms → Submit.</p></div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><h4>Copy both keys</h4><p><strong>Site Key</strong> (public) → goes in <span class="inline-code">frontend/.env</span> as <span class="inline-code">VITE_RECAPTCHA_SITE_KEY</span><br/><strong>Secret Key</strong> (private) → goes in <span class="inline-code">backend.env</span> as <span class="inline-code">RECAPTCHA_SECRET_KEY</span></p></div></div>
+  </div>
+</section>
+
+<!-- ── SENTRY ── -->
+<section class="section" id="sentry">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Phase 1.5 · Optional</div>
+    <h2>👁️ Sentry Error Monitoring</h2>
+    <p class="section-desc">Sentry automatically captures errors and alerts you when something breaks in production. Completely optional.</p>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><h4>Create a Sentry account</h4><p>Go to <strong>sentry.io</strong> → sign up free → create a new project → choose <strong>Node.js</strong>.</p></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><h4>Copy the DSN</h4><p>It looks like <span class="inline-code">https://abc123@o12345.ingest.sentry.io/789</span>. This is your <span class="inline-code">SENTRY_DSN</span>. Leave it empty in your config to disable Sentry entirely.</p></div></div>
+  </div>
+</section>
+
+<!-- ── REQUIREMENTS ── -->
+<section class="section" id="requirements">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Phase 2.1 · Server</div>
+    <h2>💻 Server Requirements</h2>
+    <p class="section-desc">ViBe can run on a cloud VM, VPS, or your own machine. Here is what you need.</p>
+  </div>
+  <div class="table-wrap fade-in">
+    <table><thead><tr><th>Resource</th><th>Minimum</th><th>Recommended</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>CPU</td><td>2 cores</td><td>4 cores</td><td></td></tr>
+      <tr><td>RAM</td><td>2 GB</td><td>4 GB</td><td>8 GB+ if using local LLM</td></tr>
+      <tr><td>Disk</td><td>20 GB</td><td>40 GB</td><td>More if storing video files</td></tr>
+      <tr><td>OS</td><td>Ubuntu 20.04+</td><td>Ubuntu 22.04 LTS</td><td>Also works: Debian, macOS, Windows WSL2</td></tr>
+    </tbody></table>
+  </div>
+</section>
+
+<!-- ── INSTALL DOCKER ── -->
+<section class="section" id="install-docker">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Phase 2.2 · Tools</div>
+    <h2>🐳 Install Docker &amp; Git</h2>
+    <p class="section-desc">Docker runs ViBe in isolated containers. Git downloads the source code.</p>
+  </div>
+  <div class="tabs fade-in">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'ubuntu')">Ubuntu / Debian</button>
+      <button class="tab-btn" onclick="switchTab(this,'mac')">macOS</button>
+      <button class="tab-btn" onclick="switchTab(this,'win')">Windows (WSL2)</button>
+    </div>
+    <div class="tab-content active" id="tab-ubuntu">
+      <div class="code-wrap">
+        <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash — Ubuntu / Debian</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="token-comment2"># Update package list</span>
+<span class="token-bash">sudo apt update</span>
+
+<span class="token-comment2"># Install Git</span>
+<span class="token-bash">sudo apt install git -y</span>
+
+<span class="token-comment2"># Install Docker dependencies</span>
+<span class="token-bash">sudo apt install ca-certificates curl gnupg -y</span>
+<span class="token-bash">sudo install -m 0755 -d /etc/apt/keyrings</span>
+<span class="token-bash">curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg</span>
+
+<span class="token-comment2"># Add Docker repository</span>
+<span class="token-bash">echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null</span>
+
+<span class="token-comment2"># Install Docker</span>
+<span class="token-bash">sudo apt update && sudo apt install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y</span>
+
+<span class="token-comment2"># Allow running Docker without sudo</span>
+<span class="token-bash">sudo usermod -aG docker $USER && newgrp docker</span>
+
+<span class="token-comment2"># Verify</span>
+<span class="token-bash">docker --version && docker compose version</span></code></pre>
+      </div>
+    </div>
+    <div class="tab-content" id="tab-mac">
+      <div class="alert info" style="margin-top:.75rem"><div class="alert-icon">💡</div><div class="alert-body">Download and install <strong>Docker Desktop</strong> from docker.com/products/docker-desktop — it includes Docker Compose. Git comes pre-installed on macOS (run <span class="inline-code">git --version</span> in Terminal to confirm).</div></div>
+    </div>
+    <div class="tab-content" id="tab-win">
+      <div class="code-wrap">
+        <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">PowerShell (as Administrator)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="token-comment2"># Enable WSL2</span>
+<span class="token-bash">wsl --install</span>
+<span class="token-comment2"># Restart your computer, then install Docker Desktop from docker.com</span>
+<span class="token-comment2"># Enable WSL2 backend in Docker Desktop settings</span></code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CLONE ── -->
+<section class="section" id="clone">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Phase 2.3 · Code</div>
+    <h2>📦 Clone the Repository</h2>
+    <p class="section-desc">Download the ViBe source code to your server.</p>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-bash">cd ~</span>
+<span class="token-bash">git clone https://github.com/continuousactivelearning/vibe.git</span>
+<span class="token-bash">cd vibe</span>
+<span class="token-bash">ls</span>
+<span class="token-comment2"># Expected: frontend/  backend/  self-hosting/  docker-compose.yml</span></code></pre>
+  </div>
+</section>
+
+<!-- ── BACKEND CONFIG ── -->
+<section class="section" id="backend-config">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Phase 3.1 · Configure</div>
+    <h2>⚙️ Backend Configuration</h2>
+    <p class="section-desc">Create the <span class="inline-code">backend.env</span> file using the values you collected in Phase 1.</p>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash — create the file</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-bash">cp self-hosting/backend.env.example backend.env</span>
+<span class="token-bash">nano backend.env</span></code></pre>
+  </div>
+  <div class="table-wrap fade-in">
+    <table><thead><tr><th>Variable</th><th>Required</th><th>What to put here</th></tr></thead>
+    <tbody>
+      <tr><td><span class="inline-code">NODE_ENV</span></td><td><span class="tag req">Required</span></td><td>Always <span class="inline-code">production</span></td></tr>
+      <tr><td><span class="inline-code">APP_PORT</span></td><td><span class="tag req">Required</span></td><td>Always <span class="inline-code">8080</span> — do not change</td></tr>
+      <tr><td><span class="inline-code">APP_URL</span></td><td><span class="tag req">Required</span></td><td><span class="inline-code">http://YOUR_SERVER_IP:8080</span></td></tr>
+      <tr><td><span class="inline-code">APP_ORIGINS</span></td><td><span class="tag req">Required</span></td><td><span class="inline-code">http://YOUR_SERVER_IP:3000</span></td></tr>
+      <tr><td><span class="inline-code">APP_ROUTE_PREFIX</span></td><td><span class="tag req">Required</span></td><td>Always <span class="inline-code">/api</span></td></tr>
+      <tr><td><span class="inline-code">APP_MODULE</span></td><td><span class="tag req">Required</span></td><td>Always <span class="inline-code">all</span></td></tr>
+      <tr><td><span class="inline-code">FRONTEND_URL</span></td><td><span class="tag req">Required</span></td><td><span class="inline-code">http://YOUR_SERVER_IP:3000/teacher</span></td></tr>
+      <tr><td><span class="inline-code">ADMIN_PASSWORD</span></td><td><span class="tag req">Required</span></td><td>A strong password you choose</td></tr>
+      <tr><td><span class="inline-code">DB_URL</span></td><td><span class="tag req">Required</span></td><td>MongoDB Atlas connection string from Phase 1.1</td></tr>
+      <tr><td><span class="inline-code">DB_NAME</span></td><td><span class="tag req">Required</span></td><td>Always <span class="inline-code">vibe</span></td></tr>
+      <tr><td><span class="inline-code">ANTHROPIC_MODEL</span></td><td><span class="tag req">Required</span></td><td><span class="inline-code">claude-sonnet-4-20250514</span></td></tr>
+      <tr><td><span class="inline-code">ANTHROPIC_CRED</span></td><td><span class="tag req">Required</span></td><td>Your Anthropic API key from Phase 1.3</td></tr>
+      <tr><td><span class="inline-code">RECAPTCHA_SECRET_KEY</span></td><td><span class="tag req">Required</span></td><td>Secret key from Phase 1.4</td></tr>
+      <tr><td><span class="inline-code">IS_RECAPTCHA_ENABLED</span></td><td><span class="tag req">Required</span></td><td><span class="inline-code">true</span> (or <span class="inline-code">false</span> to skip during testing)</td></tr>
+      <tr><td><span class="inline-code">GOOGLE_APPLICATION_CREDENTIALS</span></td><td><span class="tag req">Required</span></td><td>Always <span class="inline-code">/app/firebase-service-account.json</span></td></tr>
+      <tr><td><span class="inline-code">FIREBASE_PROJECT_ID</span></td><td><span class="tag req">Required</span></td><td>Your Firebase project ID</td></tr>
+      <tr><td><span class="inline-code">FIREBASE_CLIENT_EMAIL</span></td><td><span class="tag req">Required</span></td><td>Service account email from the downloaded JSON</td></tr>
+      <tr><td><span class="inline-code">FIREBASE_PRIVATE_KEY</span></td><td><span class="tag req">Required</span></td><td>Private key from the downloaded JSON (one line with \n)</td></tr>
+      <tr><td><span class="inline-code">SENTRY_DSN</span></td><td><span class="tag opt">Optional</span></td><td>DSN from Phase 1.5. Leave empty to disable.</td></tr>
+      <tr><td><span class="inline-code">ENABLE_DB_BACKUP</span></td><td><span class="tag opt">Optional</span></td><td><span class="inline-code">false</span> unless you set up GCP storage</td></tr>
+      <tr><td><span class="inline-code">ENABLE_HP_JOB</span></td><td><span class="tag opt">Optional</span></td><td><span class="inline-code">true</span> to enable background task processing</td></tr>
+      <tr><td><span class="inline-code">AI_SERVER_IP</span></td><td><span class="tag cond">AI Only</span></td><td>Only if using the vibe-ai video pipeline (Phase 5)</td></tr>
+    </tbody></table>
+  </div>
+</section>
+
+<!-- ── FRONTEND CONFIG ── -->
+<section class="section" id="frontend-config">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Phase 3.2 · Configure</div>
+    <h2>🎨 Frontend Configuration</h2>
+    <p class="section-desc">Create <span class="inline-code">frontend/.env</span> using your Firebase values. These are baked into the app at build time — if you change them later, you must rebuild.</p>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash — create the file</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-bash">cp self-hosting/frontend.env.example frontend/.env</span>
+<span class="token-bash">nano frontend/.env</span></code></pre>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">frontend/.env</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-comment2"># Firebase — paste values from Phase 1.2</span>
+<span class="token-key">VITE_FIREBASE_API_KEY</span>=<span class="token-value">AIzaSyABCDEF...</span>
+<span class="token-key">VITE_FIREBASE_AUTH_DOMAIN</span>=<span class="token-value">your-project.firebaseapp.com</span>
+<span class="token-key">VITE_FIREBASE_PROJECT_ID</span>=<span class="token-value">your-project-id</span>
+<span class="token-key">VITE_FIREBASE_STORAGE_BUCKET</span>=<span class="token-value">your-project.appspot.com</span>
+<span class="token-key">VITE_FIREBASE_MESSAGING_SENDER_ID</span>=<span class="token-value">123456789012</span>
+<span class="token-key">VITE_FIREBASE_APP_ID</span>=<span class="token-value">1:123456789012:web:abc...</span>
+<span class="token-key">VITE_FIREBASE_MEASUREMENT_ID</span>=<span class="token-value">G-XXXXXXXXXX</span>
+
+<span class="token-comment2"># Backend URL — nginx proxies /api requests to the backend internally</span>
+<span class="token-key">VITE_BASE_URL</span>=<span class="token-value">/api</span>
+
+<span class="token-comment2"># reCAPTCHA site key (public key from Phase 1.4)</span>
+<span class="token-key">VITE_RECAPTCHA_SITE_KEY</span>=<span class="token-value">6Lc...</span>
+<span class="token-key">VITE_IS_RECAPTCHA_ENABLED</span>=<span class="token-value">true</span></code></pre>
+  </div>
+  <div class="alert info fade-in"><div class="alert-icon">💡</div><div class="alert-body"><strong>VITE_BASE_URL uses a relative path</strong>Use <span class="inline-code">/api</span> — the nginx server inside the frontend container proxies <span class="inline-code">/api</span> requests to the backend internally. Do not use a full URL like <span class="inline-code">http://...</span> unless you have a custom reverse-proxy setup.</div></div>
+</section>
+
+<!-- ── DEPLOY ── -->
+<section class="section" id="deploy">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Phase 4.1 · Launch</div>
+    <h2>🚀 Launch with Docker</h2>
+    <p class="section-desc">Three commands to pull, build, and start everything.</p>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><h4>Pull the backend Docker image</h4><p>The backend is pre-built on Docker Hub. This downloads it to your server.</p></div></div>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-bash">docker pull vicharanashala/vibe-backend:staging</span></code></pre>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">2</div><div class="step-body"><h4>Build the frontend image</h4><p>The frontend is built from your source code so your Firebase and API URL values get baked in. This takes 3–10 minutes.</p></div></div>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-bash">docker compose build frontend</span></code></pre>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">3</div><div class="step-body"><h4>Start everything</h4><p>The <span class="inline-code">-d</span> flag runs containers in the background.</p></div></div>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-bash">docker compose up -d</span>
+<span class="token-comment2"># Check what's running</span>
+<span class="token-bash">docker compose ps</span></code></pre>
+  </div>
+</section>
+
+<!-- ── VERIFY ── -->
+<section class="section" id="verify">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Phase 4.2 · Test</div>
+    <h2>🔍 Verify Everything Works</h2>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><h4>Test the backend health endpoint</h4></div></div>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-bash">curl http://localhost:8080/health</span>
+<span class="token-comment2"># Expected: {"status":"ok"}</span></code></pre>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">2</div><div class="step-body"><h4>Open the frontend</h4><p>Go to <span class="inline-code">http://YOUR_SERVER_IP:3000</span> in a browser. You should see the ViBe login page.</p></div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><h4>Check logs if something is wrong</h4></div></div>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-bash">docker compose logs --tail=50 backend</span>
+<span class="token-bash">docker compose logs --tail=20 frontend</span></code></pre>
+  </div>
+  <div class="status-bar fade-in"><div class="status-dot"></div>Backend healthy · Connected to MongoDB · Modules loaded · Listening on port 8080</div>
+</section>
+
+<!-- ── HTTPS ── -->
+<section class="section" id="https">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Phase 4.3 · Recommended</div>
+    <h2>🔒 HTTPS with a Domain</h2>
+    <p class="section-desc">For production use, set up a real domain and SSL certificate. Free with Let's Encrypt.</p>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><h4>Install Nginx and Certbot</h4></div></div>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-bash">sudo apt install nginx certbot python3-certbot-nginx -y</span></code></pre>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">2</div><div class="step-body"><h4>Create Nginx config</h4><p>Replace <span class="inline-code">yourdomain.com</span> with your actual domain.</p></div></div>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">nginx</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code>server {
+    listen 80;
+    server_name yourdomain.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+    }
+    location /api {
+        proxy_pass http://localhost:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}</code></pre>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">3</div><div class="step-body"><h4>Enable and get SSL certificate</h4></div></div>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-bash">sudo ln -s /etc/nginx/sites-available/vibe /etc/nginx/sites-enabled/</span>
+<span class="token-bash">sudo nginx -t && sudo systemctl reload nginx</span>
+<span class="token-bash">sudo certbot --nginx -d yourdomain.com</span></code></pre>
+  </div>
+  <div class="alert success fade-in"><div class="alert-icon">✅</div><div class="alert-body"><strong>After HTTPS is set up</strong>Update <span class="inline-code">APP_URL</span>, <span class="inline-code">APP_ORIGINS</span>, <span class="inline-code">FRONTEND_URL</span> in <span class="inline-code">backend.env</span> and <span class="inline-code">VITE_BASE_URL</span> in <span class="inline-code">frontend/.env</span> to use <span class="inline-code">https://</span>. Then rebuild: <span class="inline-code">docker compose build frontend && docker compose up -d</span></div></div>
+</section>
+
+<!-- ── AI OVERVIEW ── -->
+<section class="section" id="ai-overview">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Phase 5 · AI Server</div>
+    <h2>🧠 ViBe's Two AI Systems</h2>
+    <p class="section-desc">ViBe has two completely separate AI systems. They work independently and serve different purposes.</p>
+  </div>
+  <div class="choice-grid fade-in">
+    <div class="choice-card">
+      <div class="choice-label">System 1 — Advanced</div>
+      <h4>🎬 Full Video Pipeline</h4>
+      <p class="choice-desc">Teacher uploads a video URL → ViBe automatically processes the entire video and creates a quiz course.</p>
+      <div class="choice-list">
+        <div class="choice-item"><span class="ci-icon">✓</span>Audio extraction from video</div>
+        <div class="choice-item"><span class="ci-icon">✓</span>Transcription via Whisper</div>
+        <div class="choice-item"><span class="ci-icon">✓</span>Topic segmentation (SEGBOT)</div>
+        <div class="choice-item"><span class="ci-icon">✓</span>Quiz generation via LM Studio</div>
+        <div class="choice-item"><span class="ci-icon amber">~</span>Needs vibe-ai Python server</div>
+      </div>
+    </div>
+    <div class="choice-card">
+      <div class="choice-label">System 2 — Simple</div>
+      <h4>📝 Manual Transcript</h4>
+      <p class="choice-desc">Teacher pastes a text transcript → clicks Generate → AI creates quiz questions instantly.</p>
+      <div class="choice-list">
+        <div class="choice-item"><span class="ci-icon">✓</span>One-click question generation</div>
+        <div class="choice-item"><span class="ci-icon">✓</span>Use Anthropic Cloud API</div>
+        <div class="choice-item"><span class="ci-icon">✓</span>Or use LM Studio locally (free)</div>
+        <div class="choice-item"><span class="ci-icon">✓</span>Already configured in Phase 3</div>
+        <div class="choice-item"><span class="ci-icon">✓</span>No extra server needed</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SYSTEM 1 ── -->
+<section class="section" id="system1">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Phase 5.1 · System 1</div>
+    <h2>🎬 Full Video Pipeline — vibe-ai + LM Studio</h2>
+    <p class="section-desc">The vibe-ai Python server orchestrates the video processing pipeline. LM Studio provides the local LLM for question generation.</p>
+  </div>
+  <div class="pipeline fade-in">
+    <div class="pipe-step"><div class="pipe-num">Step 1</div><div class="pipe-name">Audio Extract</div><div class="pipe-tool">ffmpeg</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="pipe-num">Step 2</div><div class="pipe-name">Transcribe</div><div class="pipe-tool">Whisper ONNX</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="pipe-num">Step 3</div><div class="pipe-name">Segment</div><div class="pipe-tool">SEGBOT ONNX</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="pipe-num">Step 4</div><div class="pipe-name">Generate Quiz</div><div class="pipe-tool">LM Studio LLM</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="pipe-num">Step 5</div><div class="pipe-name">Upload to ViBe</div><div class="pipe-tool">MongoDB</div></div>
+  </div>
+  <div class="alert info fade-in"><div class="alert-icon">💡</div><div class="alert-body"><strong>LM Studio is only needed for Step 4</strong>Steps 1–3 use ONNX models that run locally inside the vibe-ai server. Only question generation (Step 4) calls LM Studio. Questions are generated <strong>one at a time</strong> so each LLM call stays within token limits — watch progress with <span class="inline-code">docker logs vibe-aiserver --follow</span>. Intermediate audio and transcript files are automatically deleted after questions are saved. Files are stored in <strong>MinIO</strong> (open-source self-hosted object storage — no cloud account or credit card needed).</div></div>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><h4>Install LM Studio on the AI server machine</h4><p><strong>Desktop (macOS/Windows):</strong> Download from <strong>lmstudio.ai</strong> and install.<br/><strong>Linux headless server:</strong> Use the CLI below.</p></div></div>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash — Linux headless</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-bash">curl -fsSL https://files.lmstudio.ai/install.sh | bash</span>
+<span class="token-bash">source ~/.bashrc</span>
+<span class="token-bash">lms version</span></code></pre>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">2</div><div class="step-body"><h4>Download a model</h4></div></div>
+  </div>
+  <div class="table-wrap fade-in">
+    <table><thead><tr><th>Model</th><th>Disk Size</th><th>RAM Needed</th><th>Quality</th></tr></thead>
+    <tbody>
+      <tr><td>DeepSeek R1 Distill Qwen 7B <span style="color:var(--green);font-size:.75rem">★ Recommended</span></td><td>~5 GB</td><td>8 GB</td><td>Very Good</td></tr>
+      <tr><td>Mistral Nemo 12B</td><td>~7 GB</td><td>12 GB</td><td>Excellent JSON</td></tr>
+      <tr><td>Qwen 2.5 14B Instruct</td><td>~9 GB</td><td>16 GB</td><td>Excellent</td></tr>
+      <tr><td>Llama 3.3 70B</td><td>~43 GB</td><td>48 GB VRAM</td><td>Near-Claude</td></tr>
+    </tbody></table>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash — download model</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-bash">lms get "lmstudio-community/DeepSeek-R1-Distill-Qwen-7B-GGUF/DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf"</span></code></pre>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">3</div><div class="step-body"><h4>Start LM Studio server on port 1234</h4></div></div>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-bash">lms load "DeepSeek-R1-Distill-Qwen-7B-Q4_K_M" --gpu max</span>
+<span class="token-bash">lms server start --port 1234</span>
+<span class="token-comment2"># Verify</span>
+<span class="token-bash">curl http://localhost:1234/v1/models</span></code></pre>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">4</div><div class="step-body"><h4>Clone and set up the vibe-ai server</h4></div></div>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-bash">git clone https://github.com/vicharanashala/vibe-ai.git</span>
+<span class="token-bash">cd vibe-ai</span>
+<span class="token-bash">python3 -m venv venv && source venv/bin/activate</span>
+<span class="token-bash">pip install -r requirements.txt</span></code></pre>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">5</div><div class="step-body"><h4>Configure vibe-ai to use LM Studio</h4><p>In the vibe-ai directory, set the LLM endpoint to point at LM Studio (port 1234). Check the vibe-ai README for the exact config file name.</p></div></div>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">vibe-ai .env (typical)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-key">LLM_BASE_URL</span>=<span class="token-value">http://localhost:1234/v1</span>
+<span class="token-key">LLM_API_KEY</span>=<span class="token-value">not-needed</span>
+<span class="token-key">LLM_DEFAULT_MODEL</span>=<span class="token-value">DeepSeek-R1-Distill-Qwen-7B-Q4_K_M</span></code></pre>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">6</div><div class="step-body"><h4>Update ViBe backend.env to connect to vibe-ai</h4></div></div>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">backend.env</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-comment2"># Same machine as ViBe:</span>
+<span class="token-key">AI_SERVER_IP</span>=<span class="token-value">host.docker.internal</span>
+<span class="token-comment2"># Different server:</span>
+<span class="token-comment2"># AI_SERVER_IP=192.168.1.50</span>
+<span class="token-key">AI_SERVER_PORT</span>=<span class="token-value">8017</span></code></pre>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash — restart backend + start vibe-ai</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-bash">docker compose up -d backend</span>
+<span class="token-comment2"># On the vibe-ai machine:</span>
+<span class="token-bash">source venv/bin/activate && python main.py</span></code></pre>
+  </div>
+</section>
+
+<!-- ── SYSTEM 2 ── -->
+<section class="section" id="system2">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Phase 5.2 · System 2</div>
+    <h2>📝 Manual Transcript — Anthropic or LM Studio</h2>
+    <p class="section-desc">System 2 is already configured from Phase 3. Choose one option:</p>
+  </div>
+  <div class="choice-grid fade-in">
+    <div class="choice-card">
+      <div class="choice-label">Option A — Already done in Phase 3</div>
+      <h4>☁️ Anthropic Claude</h4>
+      <p class="choice-desc">Set in backend.env — nothing extra to do.</p>
+      <div class="code-wrap" style="margin-top:.75rem">
+        <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">backend.env</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre style="font-size:.75rem"><code><span class="token-key">ANTHROPIC_MODEL</span>=<span class="token-value">claude-sonnet-4-20250514</span>
+<span class="token-key">ANTHROPIC_CRED</span>=<span class="token-value">sk-ant-api03-...</span></code></pre>
+      </div>
+    </div>
+    <div class="choice-card">
+      <div class="choice-label">Option B — Free local alternative</div>
+      <h4>🖥️ LM Studio + LiteLLM</h4>
+      <p class="choice-desc">LiteLLM translates Anthropic SDK calls to LM Studio format.</p>
+      <div class="code-wrap" style="margin-top:.75rem">
+        <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">backend.env</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre style="font-size:.75rem"><code><span class="token-key">ANTHROPIC_MODEL</span>=<span class="token-value">claude-sonnet-4-20250514</span>
+<span class="token-key">ANTHROPIC_CRED</span>=<span class="token-value">local-llm-no-key</span>
+<span class="token-key">ANTHROPIC_BASE_URL</span>=<span class="token-value">http://litellm:4000</span></code></pre>
+      </div>
+    </div>
+  </div>
+  <div class="alert info fade-in"><div class="alert-icon">💡</div><div class="alert-body"><strong>LiteLLM explained</strong>LiteLLM is a tiny free proxy that translates the Anthropic API format (which ViBe uses) into the OpenAI format that LM Studio understands. It has no AI inside — it is purely a translator. Enable it by uncommenting the <span class="inline-code">litellm</span> service in <span class="inline-code">docker-compose.yml</span> and creating <span class="inline-code">litellm_config.yaml</span> from the example in <span class="inline-code">self-hosting/</span>.</div></div>
+</section>
+
+<!-- ── UPDATING ── -->
+<section class="section" id="updating">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Operations · Updates</div>
+    <h2>🔄 Updating ViBe from Source</h2>
+    <p class="section-desc">Pull the latest developer code from GitHub, apply deployment patches, and rebuild — one command does everything.</p>
+  </div>
+
+  <div class="alert info fade-in">
+    <span class="alert-icon">ℹ️</span>
+    <div class="alert-body"><strong>Why not just git pull?</strong>
+    The developer's code is built for GCP. Running it self-hosted requires 8 patches (hardcoded URLs, MinIO instead of GCS, MongoDB retries). The update script re-applies all patches automatically after every pull so they are never lost.</div>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><h4>The one update command</h4><p>Run from the <span class="inline-code">vibe/</span> folder:</p></div></div>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash — full update from GitHub</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-bash">bash update-and-rebuild.sh --git</span></code></pre>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">2</div><div class="step-body"><h4>What it does automatically</h4></div></div>
+  </div>
+  <div class="table-wrap fade-in">
+    <table><thead><tr><th>Step</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td>1. Pull backend</td><td>Clones <span class="inline-code">vicharanashala/vibe</span> monorepo → copies <span class="inline-code">backend/</span> subfolder</td></tr>
+      <tr><td>2. Pull vibe-ai</td><td><span class="inline-code">git pull</span> on <span class="inline-code">vicharanashala/vibe-ai</span></td></tr>
+      <tr><td>3. Apply patches</td><td>Copies 8 fixed files from <span class="inline-code">vibe/patches/</span> over the pulled source</td></tr>
+      <tr><td>4. Build Docker</td><td><span class="inline-code">docker compose build backend vibe-aiserver</span></td></tr>
+      <tr><td>5. Restart</td><td><span class="inline-code">docker compose up -d</span></td></tr>
+      <tr><td>6. Health check</td><td>Waits up to 3 min for backend to become healthy, prints status</td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">3</div><div class="step-body"><h4>Your secrets are never overwritten</h4></div></div>
+  </div>
+  <div class="table-wrap fade-in">
+    <table><thead><tr><th>File</th><th>On update</th></tr></thead>
+    <tbody>
+      <tr><td><span class="inline-code">backend.env</span></td><td>✅ Kept — your secrets stay</td></tr>
+      <tr><td><span class="inline-code">frontend/.env</span></td><td>✅ Kept — your Firebase keys stay</td></tr>
+      <tr><td><span class="inline-code">firebase-service-account.json</span></td><td>✅ Kept — your credentials stay</td></tr>
+      <tr><td><span class="inline-code">litellm_config.yaml</span></td><td>✅ Kept — your LLM config stays</td></tr>
+      <tr><td><span class="inline-code">docker-compose.yml</span></td><td>✅ Kept — our deployment config stays</td></tr>
+      <tr><td><span class="inline-code">patches/</span></td><td>✅ Kept — our fixes stay</td></tr>
+      <tr><td><span class="inline-code">backend/src/</span></td><td>🔄 Replaced from GitHub, then patched</td></tr>
+      <tr><td><span class="inline-code">vibe-ai/src/</span></td><td>🔄 Replaced from GitHub, then patched</td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">4</div><div class="step-body"><h4>Patch-only rebuild (no git pull)</h4><p>Use when the developer sent a ZIP file, or you want to rebuild without pulling:</p></div></div>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash — patch + rebuild only</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-bash">bash update-and-rebuild.sh</span>
+<span class="token-comment2"># (no --git flag = skips GitHub pull)</span></code></pre>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">5</div><div class="step-body"><h4>Update logs</h4><p>Every run saves a timestamped log:</p></div></div>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-comment2"># View latest update log</span>
+<span class="token-bash">ls vibe/update-logs/</span>
+<span class="token-bash">cat vibe/update-logs/update_2026-06-03_17-00-00.log</span></code></pre>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">6</div><div class="step-body"><h4>Roll back if something breaks</h4></div></div>
+  </div>
+  <div class="code-wrap fade-in">
+    <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash — rollback to previous Docker image</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="token-comment2"># Find the previous image ID</span>
+<span class="token-bash">docker images | grep vibe-backend</span>
+<span class="token-comment2"># Tag it and restart with it</span>
+<span class="token-bash">docker tag &lt;OLD_IMAGE_ID&gt; vibe-backend:rollback</span>
+<span class="token-comment2"># Edit docker-compose.yml: image: vibe-backend:rollback — then:</span>
+<span class="token-bash">docker compose up -d backend</span></code></pre>
+  </div>
+</section>
+
+<!-- ── DATABASE ── -->
+<section class="section" id="database">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Operations · Database</div>
+    <h2>🗄️ Database Reference</h2>
+    <p class="section-desc">All MongoDB collections are created automatically by ViBe on first use. You never need to create tables manually.</p>
+  </div>
+  <div class="table-wrap fade-in">
+    <table><thead><tr><th>Collection</th><th>What It Stores</th><th>Created When</th></tr></thead>
+    <tbody>
+      <tr><td><span class="inline-code">users</span></td><td>All user accounts (teachers, students, admins)</td><td>First sign-up</td></tr>
+      <tr><td><span class="inline-code">courses</span></td><td>Course definitions and metadata</td><td>First course created</td></tr>
+      <tr><td><span class="inline-code">courseitems</span></td><td>Videos, quizzes, text items inside courses</td><td>First item added</td></tr>
+      <tr><td><span class="inline-code">enrollments</span></td><td>Which students are in which courses</td><td>First enrollment</td></tr>
+      <tr><td><span class="inline-code">quizzes</span></td><td>Quiz definitions and question banks</td><td>First quiz created</td></tr>
+      <tr><td><span class="inline-code">quizattempts</span></td><td>Student answers and scores</td><td>First quiz taken</td></tr>
+      <tr><td><span class="inline-code">emotions</span></td><td>Student emotion data during learning</td><td>First emotion recorded</td></tr>
+      <tr><td><span class="inline-code">notifications</span></td><td>Email notifications and invites</td><td>First notification sent</td></tr>
+      <tr><td><span class="inline-code">anomalies</span></td><td>Detected integrity violations</td><td>First anomaly detected</td></tr>
+      <tr><td><span class="inline-code">audittrails</span></td><td>Log of all system actions</td><td>First action logged</td></tr>
+      <tr><td><span class="inline-code">reports</span></td><td>Analytics and progress reports</td><td>First report generated</td></tr>
+    </tbody></table>
+  </div>
+</section>
+
+<!-- ── TROUBLESHOOTING ── -->
+<section class="section" id="troubleshooting">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Operations · Help</div>
+    <h2>🔧 Troubleshooting</h2>
+  </div>
+
+  <div class="card fade-in" style="margin-bottom:.75rem">
+    <h3>Backend container keeps restarting</h3>
+    <p style="margin:.4rem 0;font-size:.83rem;color:var(--text2)">Run <span class="inline-code">docker compose logs backend</span> and look at the last few lines. Most common causes:</p>
+    <div style="font-size:.82rem;color:var(--text2);margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem">
+      <div>→ <span class="inline-code">MongoNetworkError</span> — wrong <span class="inline-code">DB_URL</span> or IP not whitelisted in Atlas</div>
+      <div>→ <span class="inline-code">Invalid API Key</span> — wrong <span class="inline-code">ANTHROPIC_CRED</span></div>
+      <div>→ <span class="inline-code">EADDRINUSE</span> — port 8080 already in use on your server</div>
+    </div>
+  </div>
+
+  <div class="card fade-in" style="margin-bottom:.75rem">
+    <h3>Sign-up fails / login page shows error</h3>
+    <div style="font-size:.82rem;color:var(--text2);margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem">
+      <div>→ Firebase Email/Password auth not enabled — check Firebase Console → Authentication → Sign-in providers</div>
+      <div>→ Your domain/IP not in Firebase Authorized Domains — add it in Firebase → Authentication → Settings</div>
+      <div>→ Wrong <span class="inline-code">VITE_FIREBASE_*</span> values — rebuild frontend after fixing: <span class="inline-code">docker compose build frontend && docker compose up -d</span></div>
+    </div>
+  </div>
+
+  <div class="card fade-in" style="margin-bottom:.75rem">
+    <h3>API not reachable / blank page in app</h3>
+    <div style="font-size:.82rem;color:var(--text2);margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem">
+      <div>→ Test: <span class="inline-code">curl http://localhost:8080/health</span> — if it fails, backend is down</div>
+      <div>→ <span class="inline-code">VITE_BASE_URL</span> must be reachable from the user's browser (not just from the server)</div>
+      <div>→ <span class="inline-code">APP_ORIGINS</span> in backend.env must include your frontend URL</div>
+      <div>→ Rebuild frontend after any env change: <span class="inline-code">docker compose build frontend</span></div>
+    </div>
+  </div>
+
+  <div class="card fade-in" style="margin-bottom:.75rem">
+    <h3>Port already in use</h3>
+    <div class="code-wrap" style="margin-top:.75rem">
+      <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><code><span class="token-bash">sudo lsof -i :3000   </span><span class="token-comment2"># find what's using port 3000</span>
+<span class="token-bash">sudo kill -9 &lt;PID&gt;</span></code></pre>
+    </div>
+  </div>
+
+  <div class="card fade-in" style="margin-bottom:.75rem">
+    <h3>Frontend env changes have no effect</h3>
+    <p style="margin:.4rem 0;font-size:.83rem;color:var(--text2)">Frontend env variables are baked in at build time. After any change to <span class="inline-code">frontend/.env</span> you must rebuild:</p>
+    <div class="code-wrap" style="margin-top:.75rem">
+      <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><code><span class="token-bash">docker compose build frontend && docker compose up -d frontend</span></code></pre>
+    </div>
+  </div>
+
+  <div class="card fade-in" style="margin-bottom:.75rem">
+    <h3>Video pipeline: transcript / questions show "Load failed"</h3>
+    <p style="margin:.4rem 0;font-size:.83rem;color:var(--text2)">After the AI finishes a stage, clicking the transcript or question preview shows <strong>"Load failed"</strong>. This was caused by the browser trying to fetch files from the internal Docker hostname (<span class="inline-code">minio:9000</span>) which is not reachable outside Docker. <strong>Fixed in the current codebase</strong> — the backend now rewrites internal URLs to <span class="inline-code">/gcs/...</span> and Nginx proxies those requests to MinIO.</p>
+    <div style="font-size:.82rem;color:var(--text2);margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem">
+      <div>→ If you see this, rebuild the backend and frontend: <span class="inline-code">docker compose build backend frontend && docker compose up -d</span></div>
+      <div>→ Confirm <span class="inline-code">GCS_INTERNAL_URL=http://minio:9000</span> and <span class="inline-code">GCS_EXTERNAL_URL=/gcs</span> are set in <span class="inline-code">backend.env</span></div>
+      <div>→ Confirm the <span class="inline-code">/gcs/</span> location block is present in <span class="inline-code">frontend/nginx.conf</span></div>
+    </div>
+  </div>
+
+  <div class="card fade-in" style="margin-bottom:.75rem">
+    <h3>Video pipeline: MinIO upload fails / storage unavailable</h3>
+    <p style="margin:.4rem 0;font-size:.83rem;color:var(--text2)">If stages fail with storage errors, MinIO is likely misconfigured or not running.</p>
+    <div style="font-size:.82rem;color:var(--text2);margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem">
+      <div>→ Check MinIO is running: <span class="inline-code">docker compose ps | grep minio</span></div>
+      <div>→ Check credentials match: <span class="inline-code">MINIO_ACCESS_KEY</span> / <span class="inline-code">MINIO_SECRET_KEY</span> in <span class="inline-code">vibe-ai/.env</span> must equal <span class="inline-code">MINIO_ROOT_USER</span> / <span class="inline-code">MINIO_ROOT_PASSWORD</span> in <span class="inline-code">docker-compose.yml</span></div>
+      <div>→ The bucket <span class="inline-code">vibe-aiserver-data</span> is auto-created on first start — no manual setup needed</div>
+      <div>→ View files via MinIO web UI (SSH tunnel): <span class="inline-code">ssh -L 9001:localhost:9001 user@server</span> → open <span class="inline-code">http://localhost:9001</span></div>
+    </div>
+  </div>
+
+  <div class="card fade-in" style="margin-bottom:.75rem">
+    <h3>Video pipeline: question generation produces empty results</h3>
+    <p style="margin:.4rem 0;font-size:.83rem;color:var(--text2)">The job completes but 0 questions are saved. This was caused by the LLM being asked to generate all questions in one call — the JSON response exceeded the model's token limit and was silently truncated. <strong>This is fixed in the current codebase</strong> — questions are now generated one at a time.</p>
+    <div style="font-size:.82rem;color:var(--text2);margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem">
+      <div>→ Watch live progress: <span class="inline-code">docker logs vibe-aiserver --follow</span></div>
+      <div>→ You should see: <span class="inline-code">Generated SOL question 1/10 for segment ...</span></div>
+      <div>→ If errors appear: check LM Studio is loaded and responding: <span class="inline-code">curl http://localhost:1234/v1/models</span></div>
+      <div>→ If you rebuilt the container and questions are still empty, confirm you're running the rebuilt image: <span class="inline-code">docker compose build vibe-aiserver && docker compose up -d vibe-aiserver</span></div>
+    </div>
+  </div>
+
+  <div class="card fade-in" style="margin-bottom:.75rem">
+    <h3>Video pipeline: question generation loops / job keeps restarting</h3>
+    <p style="margin:.4rem 0;font-size:.83rem;color:var(--text2)">Questions generate partially (e.g. 1–5 succeed) then stop with <span class="inline-code">"No models loaded"</span> errors for the rest. The backend re-triggers the job and the cycle repeats. <strong>Root cause: LM Studio's auto-unload feature drops the model during the idle gap between question calls.</strong></p>
+    <div style="font-size:.82rem;color:var(--text2);margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem">
+      <div>→ <strong>Fix:</strong> Open LM Studio → Settings (gear icon, bottom-left) → <strong>Performance</strong> tab → set <strong>"Automatically unload model after X minutes of inactivity"</strong> to <strong>Never</strong></div>
+      <div>→ Confirm the model stays loaded during the full run: <span class="inline-code">curl http://localhost:1234/v1/models</span></div>
+      <div>→ Verify in logs — all 10 lines should appear without errors: <span class="inline-code">docker logs vibe-aiserver --follow</span></div>
+    </div>
+  </div>
+
+  <div class="card fade-in" style="margin-bottom:.75rem">
+    <h3>Publishing learning module fails / "Uploaded to course" error</h3>
+    <p style="margin:.4rem 0;font-size:.83rem;color:var(--text2)">After reviewing questions, clicking <strong>Publish to Course</strong> fails with a 500 error. Root cause: MongoDB write conflict (error code 112) during the long publish transaction — the existing retry logic only caught <span class="inline-code">TransientTransactionError</span>-labelled errors. <strong>Fixed in the current codebase</strong> — <span class="inline-code">BaseService.ts</span> now retries on write conflict code 112 with 5 attempts and exponential backoff.</p>
+    <div style="font-size:.82rem;color:var(--text2);margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem">
+      <div>→ If you see this error, rebuild and restart the backend: <span class="inline-code">docker compose build backend && docker compose up -d backend</span></div>
+      <div>→ Then try publishing again — the transaction will retry automatically on conflict</div>
+      <div>→ Confirm in logs: <span class="inline-code">docker logs vibe-backend --follow</span> — no more <span class="inline-code">Write conflict during plan execution</span> errors</div>
+    </div>
+  </div>
+
+  <div class="card fade-in" style="margin-bottom:.75rem">
+    <h3>Sending student invites fails / "Failed to create invites"</h3>
+    <p style="margin:.4rem 0;font-size:.83rem;color:var(--text2)">Teacher sends an invite from the dashboard and gets a 500 error. Root cause: the <span class="inline-code">invites</span> MongoDB collection had a unique index (<span class="inline-code">token_unique</span>) created <strong>without</strong> <span class="inline-code">sparse: true</span>. Individual invites never have a token, so every document stored <span class="inline-code">token: null</span>. A non-sparse unique index treats all nulls as identical — only <strong>one</strong> invite could ever exist. Every second insert hit <span class="inline-code">E11000 duplicate key error</span>. <strong>Fixed in the current codebase</strong> — the index was dropped and recreated as sparse in the live MongoDB cluster, and <span class="inline-code">InviteRepository.ts</span> now ensures the sparse index on every rebuild.</p>
+    <div style="font-size:.82rem;color:var(--text2);margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem">
+      <div>→ If you deployed before this fix, run the one-time index migration on your cluster:</div>
+      <div style="margin-left:1rem"><span class="inline-code">docker exec vibe-backend node --input-type=module - &lt;&lt;'EOF'</span></div>
+      <div style="margin-left:1rem"><span class="inline-code">import &#123; MongoClient &#125; from "mongodb";</span></div>
+      <div style="margin-left:1rem"><span class="inline-code">const c = new MongoClient(process.env.DB_URL); await c.connect();</span></div>
+      <div style="margin-left:1rem"><span class="inline-code">const inv = c.db("vibe").collection("invites");</span></div>
+      <div style="margin-left:1rem"><span class="inline-code">try &#123; await inv.dropIndex("token_unique"); &#125; catch(_) &#123;&#125;</span></div>
+      <div style="margin-left:1rem"><span class="inline-code">await inv.createIndex(&#123;token:1&#125;,&#123;unique:true,sparse:true,name:"token_unique"&#125;);</span></div>
+      <div style="margin-left:1rem"><span class="inline-code">console.log("Done"); await c.close();</span></div>
+      <div style="margin-left:1rem"><span class="inline-code">EOF</span></div>
+      <div>→ Then rebuild: <span class="inline-code">docker compose build backend && docker compose up -d backend</span></div>
+    </div>
+  </div>
+
+  <div class="card fade-in" style="margin-bottom:.75rem">
+    <h3>Video pipeline: no logs from question generation in docker logs</h3>
+    <p style="margin:.4rem 0;font-size:.83rem;color:var(--text2)">If <span class="inline-code">docker logs vibe-aiserver</span> stops at "Starting question generation task" with nothing after — the container was built without <span class="inline-code">PYTHONUNBUFFERED=1</span>. Background thread output was buffered and never flushed. <strong>Fixed in the current Dockerfile.</strong></p>
+    <div class="code-wrap" style="margin-top:.75rem">
+      <div class="code-header"><div class="code-dots"><div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div></div><span class="code-lang">bash — rebuild to get the fix</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><code><span class="token-bash">docker compose build vibe-aiserver</span>
+<span class="token-bash">docker compose up -d vibe-aiserver</span></code></pre>
+    </div>
+  </div>
+
+  <div class="card fade-in">
+    <h3>Video pipeline: job stuck after container restart</h3>
+    <p style="margin:.4rem 0;font-size:.83rem;color:var(--text2)">In-memory task state is lost on restart. If the backend cannot abort a job, it stays permanently at RUNNING. The abort endpoint now returns HTTP 200 even when no task is found — allowing the backend to mark the job ABORTED so it can be retried.</p>
+    <div style="font-size:.82rem;color:var(--text2);margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem">
+      <div>→ In the dashboard: click <strong>Abort</strong> → wait for status to change to ABORTED → click <strong>Rerun</strong></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── QUICK REF ── -->
+<section class="section" id="quickref">
+  <div class="section-header fade-in">
+    <div class="phase-pill">Quick Reference</div>
+    <h2>⚡ Command Cheat Sheet</h2>
+  </div>
+  <div class="qref-grid fade-in">
+    <div class="qref-item"><div><div class="qref-label">Start everything</div><code>docker compose up -d</code></div></div>
+    <div class="qref-item"><div><div class="qref-label">Stop everything</div><code>docker compose down</code></div></div>
+    <div class="qref-item"><div><div class="qref-label">Restart backend</div><code>docker compose restart backend</code></div></div>
+    <div class="qref-item"><div><div class="qref-label">Rebuild frontend</div><code>docker compose build frontend</code></div></div>
+    <div class="qref-item"><div><div class="qref-label">View backend logs</div><code>docker compose logs backend</code></div></div>
+    <div class="qref-item"><div><div class="qref-label">Live logs (all)</div><code>docker compose logs -f</code></div></div>
+    <div class="qref-item"><div><div class="qref-label">Check containers</div><code>docker compose ps</code></div></div>
+    <div class="qref-item"><div><div class="qref-label">Test backend health</div><code>curl http://localhost:8080/health</code></div></div>
+    <div class="qref-item"><div><div class="qref-label">Update from original source code</div><code>bash update-and-rebuild.sh --git</code></div></div>
+    <div class="qref-item"><div><div class="qref-label">Patch + rebuild only (no git pull)</div><code>bash update-and-rebuild.sh</code></div></div>
+    <div class="qref-item"><div><div class="qref-label">Enter backend shell</div><code>docker exec -it vibe-backend sh</code></div></div>
+    <div class="qref-item"><div><div class="qref-label">Check disk usage</div><code>docker system df</code></div></div>
+  </div>
+
+  <div style="margin-top:2rem;padding:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);text-align:center;font-size:.85rem;color:var(--text3)" class="fade-in">
+    For support, open an issue on the <a href="https://github.com/continuousactivelearning/vibe" style="color:var(--primary-light);text-decoration:none">ViBe GitHub repository</a> or email <a href="mailto:dled@iitrpr.ac.in" style="color:var(--primary-light);text-decoration:none">dled@iitrpr.ac.in</a>
+  </div>
+</section>
+
+</main>
+
+<!-- ══ FOOTER ══ -->
+<footer id="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a class="fb-logo" href="https://vicharanashala.github.io/vibe/">
+        <img src="logo.png" alt="ViBe" onerror="this.style.display='none'"/>
+        <span>ViBe</span>
+      </a>
+      <p class="fb-desc">An open-source AI-powered learning platform developed at IIT Ropar. Reimagining learning, one question at a time.</p>
+    </div>
+    <div class="footer-col">
+      <h5>Documentation</h5>
+      <a href="https://vicharanashala.github.io/vibe/docs/getting-started/intro">Getting Started</a>
+      <a href="https://vicharanashala.github.io/vibe/api">API Reference</a>
+      <a href="#">Self-Hosting Guide</a>
+      <a href="https://vicharanashala.github.io/vibe/newdocs/Express/Getting%20Started%20with%20Express">MERN Tutorial</a>
+    </div>
+    <div class="footer-col">
+      <h5>Community</h5>
+      <a href="https://github.com/continuousactivelearning/vibe" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://www.linkedin.com/company/dled-iit-ropar" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://vicharanashala.github.io/vibe/blog">Blog</a>
+    </div>
+    <div class="footer-col">
+      <h5>Project</h5>
+      <a href="https://github.com/continuousactivelearning/vibe/issues" target="_blank" rel="noopener">Report an Issue</a>
+      <a href="https://github.com/continuousactivelearning/vibe/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
+      <a href="mailto:dled@iitrpr.ac.in">Contact</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 <a href="https://dled.iitrpr.ac.in/" target="_blank" rel="noopener">DLED IIT Ropar</a>. Open source under MIT License.</span>
+    <span>Built with ❤️ for open education</span>
+  </div>
+</footer>
+
+<button id="btt" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">↑</button>
+
+<script>
+// ── Progress bar
+const prog=document.getElementById('progress');
+window.addEventListener('scroll',()=>{
+  const h=document.documentElement;
+  const pct=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100;
+  prog.style.width=pct+'%';
+  document.getElementById('btt').classList.toggle('show',h.scrollTop>400);
+});
+
+// ── Active sidebar link
+const sections=[...document.querySelectorAll('section[id]')];
+const navItems=[...document.querySelectorAll('.nav-item')];
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      navItems.forEach(n=>n.classList.remove('active'));
+      const a=document.querySelector('.nav-item[href="#'+e.target.id+'"]');
+      if(a){a.classList.add('active');a.scrollIntoView({block:'nearest',behavior:'smooth'})}
+    }
+  });
+},{rootMargin:'-20% 0px -70% 0px'});
+sections.forEach(s=>obs.observe(s));
+
+// ── Fade-in on scroll
+const fi=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');fi.unobserve(e.target)}});
+},{threshold:.08});
+document.querySelectorAll('.fade-in,.step').forEach(el=>fi.observe(el));
+
+// ── Tabs
+function switchTab(btn,id){
+  const bar=btn.closest('.tabs');
+  bar.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  bar.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  const tab=bar.querySelector('#tab-'+id);
+  if(tab)tab.classList.add('active');
+}
+
+// ── Copy code
+function copyCode(btn){
+  const pre=btn.closest('.code-wrap').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(()=>{
+    btn.textContent='Copied!';
+    btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied')},2000);
+  });
+}
+
+// ── Mobile sidebar
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+
+// ── Search
+function searchSections(q){
+  const term=q.toLowerCase().trim();
+  navItems.forEach(item=>{
+    item.style.display=(!term||item.textContent.toLowerCase().includes(term))?'flex':'none';
+  });
+  document.querySelectorAll('.nav-section').forEach(sec=>{
+    const next=sec.nextElementSibling;
+    sec.style.display=(next&&next.style.display!=='none')?'':'none';
+  });
+}
+
+// ── Smooth internal links + close sidebar on mobile
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',()=>{
+    if(window.innerWidth<=900){
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('overlay').classList.remove('show');
+    }
+  });
+});
+
+// ── Theme toggle
+function setTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem('vibe-theme',t);
+  document.getElementById('btn-dark').classList.toggle('active',t==='dark');
+  document.getElementById('btn-light').classList.toggle('active',t==='light');
+  document.getElementById('btn-dark').setAttribute('aria-pressed',t==='dark');
+  document.getElementById('btn-light').setAttribute('aria-pressed',t==='light');
+}
+// Apply saved theme on load (default: dark)
+(function(){
+  const saved=localStorage.getItem('vibe-theme')||'dark';
+  setTheme(saved);
+})();
+</script>
+</body>
+</html>

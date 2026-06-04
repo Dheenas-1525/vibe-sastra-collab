@@ -1,0 +1,152 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# ViBe — Docker Compose
+#
+# Usage:
+#   1. Copy self-hosting/backend.env.example  →  backend.env  and fill values
+#   2. Copy self-hosting/frontend.env.example →  frontend/frontend.env  (rename to .env)
+#      and fill values, then copy that as frontend/.env
+#   3. Run: docker-compose build
+#   4. Run: docker-compose up -d
+#
+# See self-hosting/DEPLOYMENT_GUIDE.md for the full step-by-step guide.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Backend API (Node.js / Express) ─────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend             # Build from source so WebhookService uses AI_SERVER_IP env var
+      dockerfile: Dockerfile
+    container_name: vibe-backend
+    # start.sh runs tailscale up unconditionally — override so Node.js always starts
+    command:
+      - sh
+      - -c
+      - >
+        if [ -n "$$TAILSCALE_AUTHKEY" ]; then
+          /app/tailscaled --tun=userspace-networking --socks5-server=localhost:1055 &
+          /app/tailscale up --auth-key="$$TAILSCALE_AUTHKEY" --hostname=gcp;
+        fi;
+        exec dumb-init node build/index.js
+    volumes:
+      - ./firebase-service-account.json:/app/firebase-service-account.json:ro
+    env_file:
+      - ./backend.env
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - vibe-network
+
+  # ── Frontend (React SPA served by Nginx) ────────────────────────────────────
+  frontend:
+    build:
+      context: .                    # Monorepo root — needed for pnpm-lock.yaml and pnpm-workspace.yaml
+      dockerfile: frontend/Dockerfile
+      shm_size: '2gb'               # Prevents OOM during Vite chunk rendering
+    container_name: vibe-frontend
+    ports:
+      - "3000:80"                  # Accessible at http://YOUR_SERVER_IP:3000
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - vibe-network
+
+  # ── vibe-ai Server (Python — video/audio pipeline) ──────────────────────────
+  # Handles: audio extraction → Whisper transcription → segmentation → question generation
+  # Question generation points to LM Studio via VLLM_BASE_URL in ../vibe-ai/.env
+  vibe-aiserver:
+    build:
+      context: ../vibe-ai            # cloned at: vibe-new/vibe-ai/
+      dockerfile: Dockerfile
+    container_name: vibe-aiserver
+    env_file:
+      - ../vibe-ai/.env
+    volumes:
+      - ./firebase-service-account.json:/app/firebase-service-account.json:ro
+    ports:
+      - "9017:9017"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"    # lets container reach LM Studio on the host
+    restart: unless-stopped
+    networks:
+      - vibe-network
+
+  # ── Object Storage — MinIO (open-source, production-ready) ──────────────────
+  # MinIO is an open-source S3-compatible object store used in production by
+  # universities and enterprises. No cloud account or credit card required.
+  # Files are stored in ./minio-data/ on the server disk.
+  # Port 9000 (API) and 9001 (web UI) are NOT exposed to the internet.
+  # All access goes through:
+  #   • vibe-aiserver (internal Docker network, for uploads/downloads)
+  #   • vibe-frontend Nginx /gcs/ proxy (for browser file previews)
+  # To access the MinIO web UI from your machine: use an SSH tunnel:
+  #   ssh -L 9001:localhost:9001 user@your-server
+  #   Then open http://localhost:9001 in your browser.
+  minio:
+    image: minio/minio:latest
+    container_name: vibe-minio
+    volumes:
+      - ./minio-data:/data
+    environment:
+      MINIO_ROOT_USER: vibeadmin
+      MINIO_ROOT_PASSWORD: change-this-strong-password
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    networks:
+      - vibe-network
+
+  # ── LiteLLM Proxy — bridges backend to LM Studio local LLM ─────────────────
+  # Routes ANTHROPIC_BASE_URL=http://litellm:4000 → your LM Studio server.
+  # LM Studio URL is set in litellm_config.yaml (only one line to change there).
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: vibe-litellm
+    volumes:
+      - ./litellm_config.yaml:/app/config.yaml
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    ports:
+      - "4000:4000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"    # lets container reach LM Studio on the host machine
+    restart: unless-stopped
+    networks:
+      - vibe-network
+
+  # ── MongoDB (Local Database — OPTIONAL) ─────────────────────────────────────
+  # Uncomment this section ONLY if you are NOT using MongoDB Atlas.
+  # If you use MongoDB Atlas (recommended), leave this commented out.
+  #
+  # mongodb:
+  #   image: mongo:7.0
+  #   container_name: vibe-mongodb
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: vibeadmin
+  #     MONGO_INITDB_ROOT_PASSWORD: change_this_strong_password
+  #     MONGO_INITDB_DATABASE: vibe
+  #   volumes:
+  #     - mongodb_data:/data/db
+  #   ports:
+  #     - "27017:27017"            # Only expose if needed for local tools
+  #   restart: unless-stopped
+  #   networks:
+  #     - vibe-network
+
+# ── Networks ──────────────────────────────────────────────────────────────────
+networks:
+  vibe-network:
+    driver: bridge
+
+# ── Volumes ───────────────────────────────────────────────────────────────────
+# Uncomment if using local MongoDB above
+# volumes:
+#   mongodb_data:

@@ -1,0 +1,89 @@
+# OS Specific
+.DS_Store
+Thumbs.db
+
+# Ignore database files anywhere in the project
+**/lms_db/
+
+
+# Ignore credentials folder anywhere
+**/credentials/
+
+# IDEs and Editors
+.idea/
+.vscode/
+!.vscode/settings.json
+*.swp
+*.swo
+
+# Logs
+*.log
+*.tmp
+
+# Environment Variables
+.env
+.env.*
+
+# Python Bytecode
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Node Modules (Frontend)
+node_modules/
+
+# Docker
+*.pid
+.env.docker
+
+# Production Builds
+/dist
+/build
+
+**/coverage/
+
+
+# Ignore all .py files in migrations folders
+# **/migrations/*.py
+# Except __init__.py
+# !**/migrations/__init__.py
+
+docs/static/openapi
+backend/openapi
+frontend/openapi.json
+
+# ignore sentry files
+.sentryclirc
+.sentryclirc.local
+.vibe.json
+
+.venv
+
+mcp
+frontend/public/models
+dist/
+
+config.json
+google_credentials.json
+gcp-service-account.json
+backend/tsconfig.tsbuildinfo
+frontend/tsconfig.tsbuildinfo
+frontend/.firebase
+
+
+# Playwright artifacts
+e2e/test-results/
+e2e/screenshots/
+e2e/playwright-report/
+e2e/*.txt
+
+# Local Claude agents
+.github/agents/debugger.agent.md
+
+# ── Deployment credentials (NEVER commit these) ──────────────────────────────
+firebase-service-account.json
+backend.env
+frontend/.env
+litellm_config.yaml
+update-logs/
