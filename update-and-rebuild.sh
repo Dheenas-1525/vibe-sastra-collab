@@ -68,18 +68,18 @@ bash "$SCRIPT_DIR/apply-patches.sh"
 # ── Docker image state before rebuild ────────────────────────────────────────
 echo ""
 echo "── Docker image state before rebuild ──"
-docker compose -f "$SCRIPT_DIR/docker-compose.yml" images 2>/dev/null || echo "  (no images yet)"
+docker-compose -f "$SCRIPT_DIR/docker-compose.yml" images 2>/dev/null || echo "  (no images yet)"
 
 # ── Rebuild Docker containers ─────────────────────────────────────────────────
 echo ""
 echo "── Building Docker containers ──"
 cd "$SCRIPT_DIR"
-docker compose build backend vibe-aiserver
+docker-compose build backend vibe-aiserver
 echo "  ✓ Build complete"
 
 echo ""
 echo "── Restarting containers ──"
-docker compose up -d
+docker-compose up -d
 echo "  ✓ All containers started"
 
 # ── Wait for backend to become healthy ───────────────────────────────────────
@@ -97,11 +97,11 @@ done
 # ── Final status ──────────────────────────────────────────────────────────────
 echo ""
 echo "── Final container status ──"
-docker compose ps
+docker-compose ps
 
 echo ""
 echo "── Docker image versions after rebuild ──"
-docker compose images
+docker-compose images
 
 echo ""
 echo "============================================"
