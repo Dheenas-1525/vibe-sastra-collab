@@ -109,6 +109,8 @@ class QuestionGenerationService:
         ]
         response = await model.ainvoke(messages)
         text = response.content.strip()
+        # Strip Qwen3 <think>...</think> blocks before parsing
+        text = re.sub(r'<think>[\s\S]*?</think>', '', text).strip()
         # Strip markdown code fences if the model adds them
         match = re.search(r"```(?:json)?\s*([\s\S]*?)```", text)
         if match:
