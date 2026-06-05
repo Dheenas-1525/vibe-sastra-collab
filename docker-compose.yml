@@ -73,6 +73,7 @@ services:
       - ./vibe-ai/.env
     volumes:
       - ./firebase-service-account.json:/app/firebase-service-account.json:ro
+      - whisper-cache:/root/.cache/whisper
     ports:
       - "9017:9017"
     extra_hosts:
@@ -147,6 +148,5 @@ networks:
     driver: bridge
 
 # ── Volumes ───────────────────────────────────────────────────────────────────
-# Uncomment if using local MongoDB above
-# volumes:
-#   mongodb_data:
+volumes:
+  whisper-cache:   # persists Whisper model weights across container restarts
