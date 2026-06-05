@@ -1115,8 +1115,13 @@ export class GenAIService extends BaseService {
         } else {
           // Fallback to generated questions file when no curated payload is provided.
           try {
+            // Skip SOCKS proxy for internal Docker URLs (MinIO) — proxy only applies to external AI server calls.
+            const isInternalUrl =
+              jobState.file?.startsWith('http://minio:') ||
+              jobState.file?.startsWith('http://localhost:') ||
+              jobState.file?.startsWith('http://127.0.0.1:');
             const agent =
-              appConfig.isProduction || appConfig.isStaging
+              !isInternalUrl && (appConfig.isProduction || appConfig.isStaging)
                 ? new SocksProxyAgent(aiConfig.proxyAddress)
                 : undefined;
 
